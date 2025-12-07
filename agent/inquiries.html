@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Inquiries - TES Property Agent</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Agent</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">My Inquiries</a></li>
+          <li><a href="calendar.html">Calendar</a></li>
+          <li><a href="my-properties.html">My Properties</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>My Inquiries</h1>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Viewing Scheduled">Viewing Scheduled</option>
+            <option value="Viewed - Interested">Viewed - Interested</option>
+            <option value="Viewed - Not Interested">Viewed - Not Interested</option>
+            <option value="Viewed - Undecided">Viewed - Undecided</option>
+            <option value="Deposit Paid">Deposit Paid</option>
+            <option value="Successful">Successful</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inquiries Table -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <div id="inquiriesTable">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Update Status Modal -->
+  <div id="statusModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Update Status</h2>
+        <button class="modal-close" onclick="closeModal('statusModal')">&times;</button>
+      </div>
+      <div>
+        <div class="form-group">
+          <label for="newStatus">Select New Status</label>
+          <select id="newStatus">
+            <option value="In Progress">In Progress</option>
+            <option value="Viewing Scheduled">Viewing Scheduled</option>
+            <option value="Viewed - Interested">Viewed - Interested</option>
+            <option value="Viewed - Not Interested">Viewed - Not Interested</option>
+            <option value="Viewed - Undecided">Viewed - Undecided</option>
+            <option value="Deposit Paid">Deposit Paid</option>
+            <option value="Successful">Successful</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmStatusUpdate()" class="btn btn-primary">Update</button>
+          <button onclick="closeModal('statusModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Notes Modal -->
+  <div id="notesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Notes</h2>
+        <button class="modal-close" onclick="closeModal('notesModal')">&times;</button>
+      </div>
+      <div>
+        <div class="form-group">
+          <label for="newNotes">Notes</label>
+          <textarea id="newNotes" rows="5" placeholder="Add your notes here..."></textarea>
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmAddNotes()" class="btn btn-primary">Save Notes</button>
+          <button onclick="closeModal('notesModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contact Customer Modal -->
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Contact Customer</h2>
+        <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
+      </div>
+      <div id="contactModalBody">
+        <!-- Contact info will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let currentUser = null;
+    let myInquiries = [];
+    let currentInquiry = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadInquiries();
+        setupFilters();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        myInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const inquiry = data[key];
+            if (inquiry.assignedAgentId === currentUser.id) {
+              myInquiries.push({ key: key, ...inquiry });
+            }
+          });
+          
+          myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        displayInquiries(myInquiries);
+      });
+    }
+    
+    function displayInquiries(inquiries) {
+      const container = document.getElementById('inquiriesTable');
+      
+      if (inquiries.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 2rem;">No inquiries assigned yet</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Property</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Preferred Contact</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inquiries.map(inquiry => `
+                <tr>
+                  <td>#${inquiry.id}</td>
+                  <td><strong>${inquiry.propertyName}</strong></td>
+                  <td>
+                    ${inquiry.customerName}<br>
+                    <small class="text-muted">${inquiry.customerEmail}</small>
+                  </td>
+                  <td>${inquiry.customerPhone}</td>
+                  <td><span class="badge badge-info">${inquiry.preferredContact}</span></td>
+                  <td><span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></td>
+                  <td>${formatDate(inquiry.createdAt)}</td>
+                  <td>
+                    <button onclick="updateStatus('${inquiry.key}')" class="btn btn-sm btn-primary" title="Update Status">📝</button>
+                    <button onclick="addNotes('${inquiry.key}')" class="btn btn-sm btn-outline" title="Add Notes">📄</button>
+                    <button onclick="contactCustomer('${inquiry.key}')" class="btn btn-sm btn-success" title="Contact">📞</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function setupFilters() {
+      document.getElementById('filterStatus').addEventListener('change', applyFilters);
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      
+      let filtered = myInquiries;
+      
+      if (status) {
+        filtered = filtered.filter(i => i.status === status);
+      }
+      
+      displayInquiries(filtered);
+    }
+    
+    function updateStatus(inquiryKey) {
+      currentInquiry = myInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      document.getElementById('newStatus').value = currentInquiry.status;
+      openModal('statusModal');
+    }
+    
+    function confirmStatusUpdate() {
+      const newStatus = document.getElementById('newStatus').value;
+      
+      if (!newStatus) {
+        showAlert('Please select a status', 'danger');
+        return;
+      }
+      
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      const timestamp = new Date().toISOString();
+      
+      inquiryRef.update({
+        status: newStatus,
+        statusHistory: [
+          ...currentInquiry.statusHistory,
+          {
+            status: newStatus,
+            changedBy: currentUser.name,
+            timestamp: timestamp
+          }
+        ]
+      }).then(() => {
+        showAlert('Status updated successfully', 'success');
+        closeModal('statusModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error updating status:', error);
+        showAlert('Failed to update status', 'danger');
+      });
+    }
+    
+    function addNotes(inquiryKey) {
+      currentInquiry = myInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      document.getElementById('newNotes').value = '';
+      openModal('notesModal');
+    }
+    
+    function confirmAddNotes() {
+      const notes = document.getElementById('newNotes').value.trim();
+      
+      if (!notes) {
+        showAlert('Please enter notes', 'danger');
+        return;
+      }
+      
+      const timestamp = new Date().toISOString();
+      const existingNotes = currentInquiry.notes || '';
+      const newNotes = `${existingNotes}\n[${formatDateTime(timestamp)} - ${currentUser.name}]\n${notes}`;
+      
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      
+      inquiryRef.update({
+        notes: newNotes.trim()
+      }).then(() => {
+        showAlert('Notes added successfully', 'success');
+        closeModal('notesModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error adding notes:', error);
+        showAlert('Failed to add notes', 'danger');
+      });
+    }
+    
+    function contactCustomer(inquiryKey) {
+      const inquiry = myInquiries.find(i => i.key === inquiryKey);
+      if (!inquiry) return;
+      
+      const smsTemplates = [
+        `Hi ${inquiry.customerName.split(' ')[0]}, this is ${currentUser.name} from TES Property regarding ${inquiry.propertyName}. When would be a good time to schedule a viewing?`,
+        `Good day ${inquiry.customerName.split(' ')[0]}! I'm ${currentUser.name} from TES Property. I'd like to discuss ${inquiry.propertyName} with you. Are you available for a call?`,
+        `Hello ${inquiry.customerName.split(' ')[0]}, ${currentUser.name} here from TES Property. I have the details for ${inquiry.propertyName}. Would you like to schedule a viewing?`
+      ];
+      
+      const modalBody = document.getElementById('contactModalBody');
+      
+      modalBody.innerHTML = `
+        <div style="margin-bottom: 1.5rem;">
+          <h4>Customer Information</h4>
+          <p><strong>Name:</strong> ${inquiry.customerName}</p>
+          <p><strong>Email:</strong> <a href="mailto:${inquiry.customerEmail}">${inquiry.customerEmail}</a></p>
+          <p><strong>Phone:</strong> <a href="tel:${inquiry.customerPhone}">${inquiry.customerPhone}</a></p>
+          <p><strong>Preferred Method:</strong> <span class="badge badge-info">${inquiry.preferredContact}</span></p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <h4>Property</h4>
+          <p><strong>${inquiry.propertyName}</strong></p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <h4>Customer Message</h4>
+          <p style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius);">
+            ${inquiry.message}
+          </p>
+        </div>
+        
+        <div>
+          <h4>SMS Templates (Click to copy)</h4>
+          ${smsTemplates.map((template, index) => {
+            // Properly escape template for onclick attribute
+            const escapedTemplate = template.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            return `
+              <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 0.5rem; cursor: pointer;" onclick="copyToClipboard('${escapedTemplate}')">
+                <small>${template}</small>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      
+      openModal('contactModal');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

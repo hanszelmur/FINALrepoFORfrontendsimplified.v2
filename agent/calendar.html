@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Calendar - TES Property Agent</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Agent</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">My Inquiries</a></li>
+          <li><a href="calendar.html">Calendar</a></li>
+          <li><a href="my-properties.html">My Properties</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <h1>My Calendar</h1>
+      <button onclick="openAddEventModal()" class="btn btn-primary">+ Add Event</button>
+    </div>
+    
+    <!-- Calendar View -->
+    <div class="card">
+      <div class="card-body">
+        <h3>My Upcoming Viewings</h3>
+        <div id="calendarEvents" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Event Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Event</h2>
+        <button class="modal-close" onclick="closeModal('eventModal')">&times;</button>
+      </div>
+      <form id="eventForm">
+        <div class="form-group">
+          <label for="eventType">Event Type</label>
+          <select id="eventType" required>
+            <option value="viewing">Viewing</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </div>
+        
+        <div id="viewingFields">
+          <div class="form-group">
+            <label for="eventInquiry">Select Inquiry</label>
+            <select id="eventInquiry">
+              <option value="">Select an inquiry</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="unavailableFields" style="display: none;">
+          <div class="form-group">
+            <label for="eventReason">Reason</label>
+            <input type="text" id="eventReason" placeholder="e.g., Personal leave, Training">
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="eventDate">Date</label>
+            <input type="date" id="eventDate" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="eventTime">Time</label>
+            <input type="time" id="eventTime" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="eventStatus">Status</label>
+          <select id="eventStatus">
+            <option value="confirmed">Confirmed</option>
+            <option value="tentative">Tentative</option>
+          </select>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary">Save Event</button>
+          <button type="button" onclick="closeModal('eventModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let currentUser = null;
+    let myInquiries = [];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadEvents();
+        loadInquiries();
+        setupEventForm();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadEvents() {
+      const calendarRef = getCalendarRef();
+      
+      calendarRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const events = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const event = data[key];
+            if (event.agentId === currentUser.id) {
+              events.push({ key: key, ...event });
+            }
+          });
+          
+          events.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+        }
+        
+        displayEvents(events);
+      });
+    }
+    
+    function displayEvents(events) {
+      const container = document.getElementById('calendarEvents');
+      const now = new Date();
+      
+      const upcoming = events.filter(e => new Date(e.date + ' ' + e.time) >= now);
+      
+      if (upcoming.length === 0) {
+        container.innerHTML = '<p class="text-muted">No upcoming events</p>';
+        return;
+      }
+      
+      container.innerHTML = upcoming.map(event => {
+        const statusClass = event.status === 'confirmed' ? 'event-confirmed' : 'event-tentative';
+        const icon = event.type === 'viewing' ? '👁️' : '🚫';
+        
+        return `
+          <div class="calendar-event ${statusClass}" style="padding: 1rem; margin-bottom: 0.5rem;">
+            <div class="d-flex justify-between align-center">
+              <div>
+                <strong>${icon} ${event.type === 'viewing' ? event.propertyName : 'Unavailable'}</strong><br>
+                <small>${formatDate(event.date)} at ${event.time}</small>
+                ${event.customerName ? `<br><small>Customer: ${event.customerName}</small>` : ''}
+                ${event.reason ? `<br><small>Reason: ${event.reason}</small>` : ''}
+              </div>
+              <span class="badge ${event.status === 'confirmed' ? 'badge-success' : 'badge-warning'}">
+                ${event.status}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        myInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const inquiry = data[key];
+            if (inquiry.assignedAgentId === currentUser.id && 
+                ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided'].includes(inquiry.status)) {
+              myInquiries.push({ key: key, ...inquiry });
+            }
+          });
+        }
+        
+        updateInquiryDropdown();
+      });
+    }
+    
+    function updateInquiryDropdown() {
+      const select = document.getElementById('eventInquiry');
+      select.innerHTML = '<option value="">Select an inquiry</option>';
+      
+      myInquiries.forEach(inquiry => {
+        select.innerHTML += `<option value="${inquiry.id}">${inquiry.propertyName} - ${inquiry.customerName}</option>`;
+      });
+    }
+    
+    function openAddEventModal() {
+      document.getElementById('eventForm').reset();
+      document.getElementById('viewingFields').style.display = 'block';
+      document.getElementById('unavailableFields').style.display = 'none';
+      openModal('eventModal');
+    }
+    
+    function setupEventForm() {
+      document.getElementById('eventType').addEventListener('change', function() {
+        const type = this.value;
+        
+        if (type === 'viewing') {
+          document.getElementById('viewingFields').style.display = 'block';
+          document.getElementById('unavailableFields').style.display = 'none';
+        } else {
+          document.getElementById('viewingFields').style.display = 'none';
+          document.getElementById('unavailableFields').style.display = 'block';
+        }
+      });
+      
+      document.getElementById('eventForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const type = document.getElementById('eventType').value;
+        const date = document.getElementById('eventDate').value;
+        const time = document.getElementById('eventTime').value;
+        const status = document.getElementById('eventStatus').value;
+        
+        const event = {
+          id: Date.now(),
+          type: type,
+          agentId: currentUser.id,
+          agentName: currentUser.name,
+          date: date,
+          time: time,
+          status: status,
+          createdAt: new Date().toISOString()
+        };
+        
+        if (type === 'viewing') {
+          const inquiryId = parseInt(document.getElementById('eventInquiry').value);
+          if (!inquiryId) {
+            showAlert('Please select an inquiry', 'danger');
+            return;
+          }
+          
+          const inquiry = myInquiries.find(i => i.id === inquiryId);
+          if (inquiry) {
+            event.inquiryId = inquiry.id;
+            event.propertyId = inquiry.propertyId;
+            event.propertyName = inquiry.propertyName;
+            event.customerName = inquiry.customerName;
+          }
+        } else {
+          event.reason = document.getElementById('eventReason').value;
+          event.time = 'All Day';
+        }
+        
+        const calendarRef = getCalendarRef();
+        const newEventKey = calendarRef.push().key;
+        
+        calendarRef.child(newEventKey).set(event)
+          .then(() => {
+            showAlert('Event added successfully', 'success');
+            closeModal('eventModal');
+          })
+          .catch(error => {
+            console.error('Error adding event:', error);
+            showAlert('Failed to add event', 'danger');
+          });
+      });
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

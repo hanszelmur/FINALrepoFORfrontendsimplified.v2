@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - TES Property Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Admin</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">Inquiries</a></li>
+          <li><a href="properties.html">Properties</a></li>
+          <li><a href="agents.html">Agents</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="../shared/calendar-view.html">Calendar</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Reports & Analytics</h1>
+    
+    <!-- Date Range Filter -->
+    <div class="filters" style="margin-top: 2rem;">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="dateRange">Date Range</label>
+          <select id="dateRange" onchange="updateDateRange()">
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        
+        <div class="form-group" id="customDateFrom" style="margin-bottom: 0; display: none;">
+          <label for="startDate">Start Date</label>
+          <input type="date" id="startDate">
+        </div>
+        
+        <div class="form-group" id="customDateTo" style="margin-bottom: 0; display: none;">
+          <label for="endDate">End Date</label>
+          <input type="date" id="endDate">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>&nbsp;</label>
+          <button onclick="generateReports()" class="btn btn-primary">Generate Reports</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Export Options -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>Export Reports</h3>
+        <div class="grid grid-cols-4" style="margin-top: 1.5rem; gap: 1rem;">
+          <button onclick="exportReport('inquiries')" class="btn btn-outline">
+            📋 All Inquiries
+          </button>
+          <button onclick="exportReport('activeInquiries')" class="btn btn-outline">
+            ✅ Active Inquiries
+          </button>
+          <button onclick="exportReport('soldProperties')" class="btn btn-outline">
+            🏠 Sold Properties
+          </button>
+          <button onclick="exportReport('salesCommissions')" class="btn btn-outline">
+            💰 Sales & Commissions
+          </button>
+          <button onclick="exportReport('agentPerformance')" class="btn btn-outline">
+            👥 Agent Performance
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Statistics Summary -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>Statistics Summary</h3>
+        <div id="statisticsSummary" style="margin-top: 1.5rem;">
+          <p class="text-muted">Select a date range and click "Generate Reports" to view statistics</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let startDate, endDate;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        updateDateRange();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function updateDateRange() {
+      const range = document.getElementById('dateRange').value;
+      const customFrom = document.getElementById('customDateFrom');
+      const customTo = document.getElementById('customDateTo');
+      
+      if (range === 'custom') {
+        customFrom.style.display = 'block';
+        customTo.style.display = 'block';
+        return;
+      } else {
+        customFrom.style.display = 'none';
+        customTo.style.display = 'none';
+      }
+      
+      const now = new Date();
+      endDate = new Date(now);
+      
+      if (range === '7' || range === '30' || range === '90') {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - parseInt(range));
+      } else if (range === 'thisMonth') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else if (range === 'lastMonth') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+      }
+    }
+    
+    function generateReports() {
+      const range = document.getElementById('dateRange').value;
+      
+      if (range === 'custom') {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        
+        if (!start || !end) {
+          showAlert('Please select both start and end dates', 'danger');
+          return;
+        }
+        
+        startDate = new Date(start);
+        endDate = new Date(end);
+      }
+      
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      
+      Promise.all([
+        inquiriesRef.once('value'),
+        propertiesRef.once('value')
+      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
+        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
+        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+        
+        const filtered = inquiries.filter(i => {
+          const date = new Date(i.createdAt);
+          return date >= startDate && date <= endDate;
+        });
+        
+        const soldProperties = properties.filter(p => {
+          return p.status === 'Sold' && p.soldDate && 
+                 new Date(p.soldDate) >= startDate && 
+                 new Date(p.soldDate) <= endDate;
+        });
+        
+        const totalSales = soldProperties.reduce((sum, p) => sum + (p.finalSalePrice || p.price), 0);
+        const totalCommissions = soldProperties.reduce((sum, p) => sum + (p.commission || 0), 0);
+        
+        const active = filtered.filter(i => 
+          ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+        ).length;
+        
+        document.getElementById('statisticsSummary').innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon primary">📋</div>
+              <div class="stat-info">
+                <h3>${filtered.length}</h3>
+                <p>Total Inquiries</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon success">✅</div>
+              <div class="stat-info">
+                <h3>${active}</h3>
+                <p>Active Inquiries</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon warning">🏠</div>
+              <div class="stat-info">
+                <h3>${soldProperties.length}</h3>
+                <p>Properties Sold</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon success">💰</div>
+              <div class="stat-info">
+                <h3>${formatPHP(totalSales)}</h3>
+                <p>Total Sales</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon warning">💵</div>
+              <div class="stat-info">
+                <h3>${formatPHP(totalCommissions)}</h3>
+                <p>Total Commissions</p>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        showAlert('Reports generated successfully', 'success');
+      });
+    }
+    
+    function exportReport(type) {
+      updateDateRange();
+      
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      const usersRef = getUsersRef();
+      
+      Promise.all([
+        inquiriesRef.once('value'),
+        propertiesRef.once('value'),
+        usersRef.once('value')
+      ]).then(([inquiriesSnapshot, propertiesSnapshot, usersSnapshot]) => {
+        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
+        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+        const users = usersSnapshot.val() ? Object.values(usersSnapshot.val()) : [];
+        
+        let data = [];
+        let filename = '';
+        
+        switch(type) {
+          case 'inquiries':
+            data = inquiries.map(i => ({
+              'ID': i.id,
+              'Property': i.propertyName,
+              'Customer': i.customerName,
+              'Email': i.customerEmail,
+              'Phone': i.customerPhone,
+              'Status': i.status,
+              'Agent': i.assignedAgentName || 'Unassigned',
+              'Created': formatDate(i.createdAt)
+            }));
+            filename = 'all-inquiries';
+            break;
+            
+          case 'activeInquiries':
+            data = inquiries.filter(i => 
+              ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+            ).map(i => ({
+              'ID': i.id,
+              'Property': i.propertyName,
+              'Customer': i.customerName,
+              'Email': i.customerEmail,
+              'Phone': i.customerPhone,
+              'Status': i.status,
+              'Agent': i.assignedAgentName || 'Unassigned',
+              'Created': formatDate(i.createdAt)
+            }));
+            filename = 'active-inquiries';
+            break;
+            
+          case 'soldProperties':
+            data = properties.filter(p => p.status === 'Sold').map(p => ({
+              'Property': p.name,
+              'Type': p.propertyType,
+              'Location': `${p.address.city}, ${p.address.province}`,
+              'Original Price': formatPHP(p.price),
+              'Final Price': formatPHP(p.finalSalePrice || p.price),
+              'Sold Date': formatDate(p.soldDate),
+              'Commission': formatPHP(p.commission)
+            }));
+            filename = 'sold-properties';
+            break;
+            
+          case 'salesCommissions':
+            data = properties.filter(p => p.status === 'Sold').map(p => ({
+              'Property': p.name,
+              'Sale Price': p.finalSalePrice || p.price,
+              'Commission': p.commission || 0,
+              'Commission Paid': p.commissionPaid ? 'Yes' : 'No',
+              'Sold Date': formatDate(p.soldDate)
+            }));
+            filename = 'sales-commissions';
+            break;
+            
+          case 'agentPerformance':
+            data = users.filter(u => u.role === 'agent').map(a => ({
+              'Agent': a.name,
+              'Email': a.email,
+              'Active Inquiries': a.activeInquiries || 0,
+              'Properties Sold': a.propertiesSold || 0,
+              'Total Commission': a.totalCommission || 0
+            }));
+            filename = 'agent-performance';
+            break;
+        }
+        
+        if (data.length === 0) {
+          showAlert('No data to export', 'warning');
+          return;
+        }
+        
+        exportToCSV(data, filename);
+      });
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

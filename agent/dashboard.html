@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Dashboard - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Agent</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">My Inquiries</a></li>
+          <li><a href="calendar.html">Calendar</a></li>
+          <li><a href="my-properties.html">My Properties</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1>My Dashboard</h1>
+        <p class="text-muted">Welcome back, <span id="userName">Agent</span></p>
+      </div>
+      <div>
+        <button onclick="location.reload()" class="btn btn-outline btn-sm">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <!-- My Tasks Today -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-body">
+        <h3>📅 My Tasks Today</h3>
+        <div id="tasksToday" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          📋
+        </div>
+        <div class="stat-info">
+          <h3 id="activeInquiries">0</h3>
+          <p>Active Inquiries</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          📅
+        </div>
+        <div class="stat-info">
+          <h3 id="viewingsThisWeek">0</h3>
+          <p>Viewings This Week</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          🏠
+        </div>
+        <div class="stat-info">
+          <h3 id="propertiesSold">0</h3>
+          <p>Properties Sold (Month)</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          💰
+        </div>
+        <div class="stat-info">
+          <h3 id="commissionEarned">₱0.00</h3>
+          <p>Commission Earned</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>📊 Recent Activity</h3>
+        <div id="recentActivity" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let currentUser = null;
+    let myInquiries = [];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      document.getElementById('userName').textContent = currentUser.name;
+      
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadDashboardData();
+        setupRealTimeListeners();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadDashboardData() {
+      loadInquiries();
+      loadCalendarEvents();
+      loadUserStats();
+    }
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        myInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const inquiry = data[key];
+            if (inquiry.assignedAgentId === currentUser.id) {
+              myInquiries.push({ key: key, ...inquiry });
+            }
+          });
+          
+          myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        updateTasksToday();
+        updateRecentActivity();
+        updateActiveInquiriesCount();
+      });
+    }
+    
+    function updateTasksToday() {
+      const container = document.getElementById('tasksToday');
+      const now = new Date();
+      const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+      
+      // Urgent: No contact in 48+ hours
+      const urgent = myInquiries.filter(i => 
+        ['Assigned', 'In Progress'].includes(i.status) &&
+        new Date(i.createdAt) < twoDaysAgo
+      );
+      
+      // Viewings scheduled today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todayViewings = myInquiries.filter(i => 
+        i.status === 'Viewing Scheduled'
+      );
+      
+      // Active inquiries
+      const active = myInquiries.filter(i => 
+        ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided'].includes(i.status)
+      );
+      
+      const tasks = [];
+      
+      if (urgent.length > 0) {
+        tasks.push(`
+          <div style="padding: 1rem; background-color: #fed7d7; border-left: 4px solid var(--danger-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
+            <strong>🔴 Urgent:</strong> ${urgent.length} inquiry/inquiries with no contact for 48+ hours
+            <a href="inquiries.html?filter=urgent" class="btn btn-sm btn-danger" style="float: right; margin-top: -0.25rem;">View</a>
+          </div>
+        `);
+      }
+      
+      if (todayViewings.length > 0) {
+        tasks.push(`
+          <div style="padding: 1rem; background-color: #feebc8; border-left: 4px solid var(--warning-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
+            <strong>🟡 Today's Viewings:</strong> ${todayViewings.length} scheduled viewing(s)
+            <a href="calendar.html" class="btn btn-sm btn-warning" style="float: right; margin-top: -0.25rem;">View Calendar</a>
+          </div>
+        `);
+      }
+      
+      tasks.push(`
+        <div style="padding: 1rem; background-color: #c6f6d5; border-left: 4px solid var(--success-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
+          <strong>🟢 Active Inquiries:</strong> ${active.length} inquiry/inquiries to follow up
+          <a href="inquiries.html" class="btn btn-sm btn-success" style="float: right; margin-top: -0.25rem;">View All</a>
+        </div>
+      `);
+      
+      container.innerHTML = tasks.join('');
+    }
+    
+    function updateRecentActivity() {
+      const container = document.getElementById('recentActivity');
+      
+      if (myInquiries.length === 0) {
+        container.innerHTML = '<p class="text-muted">No inquiries assigned yet</p>';
+        return;
+      }
+      
+      const recent = myInquiries.slice(0, 10);
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recent.map(inquiry => `
+                <tr>
+                  <td><strong>${inquiry.propertyName}</strong></td>
+                  <td>${inquiry.customerName}</td>
+                  <td><span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></td>
+                  <td>${getTimeAgo(inquiry.createdAt)}</td>
+                  <td>
+                    <a href="inquiries.html?id=${inquiry.id}" class="btn btn-sm btn-primary">View</a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function updateActiveInquiriesCount() {
+      const active = myInquiries.filter(i => 
+        ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+      );
+      
+      document.getElementById('activeInquiries').textContent = active.length;
+    }
+    
+    function loadCalendarEvents() {
+      const calendarRef = getCalendarRef();
+      
+      calendarRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+          document.getElementById('viewingsThisWeek').textContent = '0';
+          return;
+        }
+        
+        const events = Object.values(data);
+        const now = new Date();
+        const weekEnd = new Date(now);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        
+        const myViewings = events.filter(e => 
+          e.type === 'viewing' &&
+          e.agentId === currentUser.id &&
+          new Date(e.date) <= weekEnd &&
+          new Date(e.date) >= now
+        );
+        
+        document.getElementById('viewingsThisWeek').textContent = myViewings.length;
+      });
+    }
+    
+    function loadUserStats() {
+      const usersRef = getUsersRef();
+      
+      usersRef.child(`user_${currentUser.id}`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (data) {
+          document.getElementById('propertiesSold').textContent = data.propertiesSold || 0;
+          document.getElementById('commissionEarned').textContent = formatPHP(data.totalCommission || 0);
+        }
+      });
+    }
+    
+    function setupRealTimeListeners() {
+      const inquiriesRef = getInquiriesRef();
+      let isFirstLoad = true;
+      
+      inquiriesRef.on('child_added', (snapshot) => {
+        if (isFirstLoad) return;
+        
+        const inquiry = snapshot.val();
+        if (inquiry.assignedAgentId === currentUser.id) {
+          showAlert(`New inquiry assigned: ${inquiry.propertyName}`, 'info');
+        }
+      });
+      
+      setTimeout(() => {
+        isFirstLoad = false;
+      }, 1000);
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>
