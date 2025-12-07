@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shared Calendar - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="#" class="navbar-brand">🏠 TES Property</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu" id="navMenu">
+          <!-- Will be populated based on user role -->
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Shared Calendar</h1>
+    <p class="text-muted">View all scheduled viewings and agent availability</p>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterAgent">Agent</label>
+          <select id="filterAgent">
+            <option value="">All Agents</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterProperty">Property</label>
+          <select id="filterProperty">
+            <option value="">All Properties</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="tentative">Tentative</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterDateFrom">Date From</label>
+          <input type="date" id="filterDateFrom">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterDateTo">Date To</label>
+          <input type="date" id="filterDateTo">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Calendar Events -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>Scheduled Events</h3>
+        <div id="calendarEvents" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Property Coordination -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>Property Coordination</h3>
+        <p class="text-muted">Properties with multiple scheduled viewings</p>
+        <div id="propertyCoordination" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let currentUser = null;
+    let allEvents = [];
+    let allAgents = [];
+    let allProperties = [];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      currentUser = getCurrentUser();
+      
+      if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      setupNavigation();
+      initNavigation(currentUser.role);
+      
+      if (initializeFirebase()) {
+        loadAgents();
+        loadProperties();
+        loadEvents();
+        setupFilters();
+        
+        // Set default date range to next 30 days
+        const today = new Date();
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+        
+        document.getElementById('filterDateFrom').value = today.toISOString().split('T')[0];
+        document.getElementById('filterDateTo').value = futureDate.toISOString().split('T')[0];
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function setupNavigation() {
+      const navMenu = document.getElementById('navMenu');
+      
+      if (currentUser.role === 'admin') {
+        navMenu.innerHTML = `
+          <li><a href="../admin/dashboard.html">Dashboard</a></li>
+          <li><a href="../admin/inquiries.html">Inquiries</a></li>
+          <li><a href="../admin/properties.html">Properties</a></li>
+          <li><a href="../admin/agents.html">Agents</a></li>
+          <li><a href="../admin/reports.html">Reports</a></li>
+          <li><a href="calendar-view.html">Calendar</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        `;
+      } else if (currentUser.role === 'agent') {
+        navMenu.innerHTML = `
+          <li><a href="../agent/dashboard.html">Dashboard</a></li>
+          <li><a href="../agent/inquiries.html">My Inquiries</a></li>
+          <li><a href="../agent/calendar.html">My Calendar</a></li>
+          <li><a href="calendar-view.html">Shared Calendar</a></li>
+          <li><a href="../agent/my-properties.html">My Properties</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        `;
+      }
+    }
+    
+    function loadAgents() {
+      const usersRef = getUsersRef();
+      
+      usersRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        allAgents = Object.values(data).filter(u => u.role === 'agent');
+        
+        const filterAgent = document.getElementById('filterAgent');
+        filterAgent.innerHTML = '<option value="">All Agents</option>';
+        
+        allAgents.forEach(agent => {
+          filterAgent.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
+        });
+      });
+    }
+    
+    function loadProperties() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        allProperties = Object.values(data);
+        
+        const filterProperty = document.getElementById('filterProperty');
+        filterProperty.innerHTML = '<option value="">All Properties</option>';
+        
+        allProperties.forEach(property => {
+          filterProperty.innerHTML += `<option value="${property.id}">${property.name}</option>`;
+        });
+      });
+    }
+    
+    function loadEvents() {
+      const calendarRef = getCalendarRef();
+      
+      calendarRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allEvents = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            allEvents.push({ key: key, ...data[key] });
+          });
+          
+          allEvents.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+        }
+        
+        displayEvents(allEvents);
+        displayPropertyCoordination(allEvents);
+      });
+    }
+    
+    function displayEvents(events) {
+      const container = document.getElementById('calendarEvents');
+      
+      if (events.length === 0) {
+        container.innerHTML = '<p class="text-muted">No events scheduled</p>';
+        return;
+      }
+      
+      container.innerHTML = events.map(event => {
+        const statusClass = event.status === 'confirmed' ? 'event-confirmed' : 'event-tentative';
+        const icon = event.type === 'viewing' ? '👁️' : '🚫';
+        
+        return `
+          <div class="calendar-event ${statusClass}" style="padding: 1rem; margin-bottom: 0.5rem;">
+            <div class="d-flex justify-between align-center">
+              <div>
+                <strong>${icon} ${event.type === 'viewing' ? event.propertyName : 'Unavailable'}</strong>
+                <span class="badge badge-info" style="margin-left: 0.5rem;">${event.agentName}</span><br>
+                <small>${formatDate(event.date)} at ${event.time}</small>
+                ${event.customerName ? `<br><small>Customer: ${event.customerName}</small>` : ''}
+                ${event.reason ? `<br><small>Reason: ${event.reason}</small>` : ''}
+              </div>
+              <span class="badge ${event.status === 'confirmed' ? 'badge-success' : 'badge-warning'}">
+                ${event.status}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function displayPropertyCoordination(events) {
+      const container = document.getElementById('propertyCoordination');
+      
+      // Group viewings by property
+      const viewings = events.filter(e => e.type === 'viewing');
+      const grouped = {};
+      
+      viewings.forEach(event => {
+        if (!grouped[event.propertyId]) {
+          grouped[event.propertyId] = {
+            propertyName: event.propertyName,
+            events: []
+          };
+        }
+        grouped[event.propertyId].events.push(event);
+      });
+      
+      // Filter to properties with multiple viewings
+      const coordinated = Object.values(grouped).filter(g => g.events.length > 1);
+      
+      if (coordinated.length === 0) {
+        container.innerHTML = '<p class="text-muted">No properties require coordination</p>';
+        return;
+      }
+      
+      container.innerHTML = coordinated.map(property => `
+        <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
+          <h4>${property.propertyName}</h4>
+          <p><strong>${property.events.length}</strong> viewings scheduled:</p>
+          <ul style="margin-left: 1.5rem;">
+            ${property.events.map(e => `
+              <li>${e.agentName} - ${formatDate(e.date)} at ${e.time}</li>
+            `).join('')}
+          </ul>
+        </div>
+      `).join('');
+    }
+    
+    function setupFilters() {
+      const filters = ['filterAgent', 'filterProperty', 'filterStatus', 'filterDateFrom', 'filterDateTo'];
+      filters.forEach(filterId => {
+        document.getElementById(filterId).addEventListener('change', applyFilters);
+      });
+    }
+    
+    function applyFilters() {
+      const agentId = document.getElementById('filterAgent').value;
+      const propertyId = document.getElementById('filterProperty').value;
+      const status = document.getElementById('filterStatus').value;
+      const dateFrom = document.getElementById('filterDateFrom').value;
+      const dateTo = document.getElementById('filterDateTo').value;
+      
+      let filtered = allEvents;
+      
+      if (agentId) {
+        filtered = filtered.filter(e => e.agentId == agentId);
+      }
+      
+      if (propertyId) {
+        filtered = filtered.filter(e => e.propertyId == propertyId);
+      }
+      
+      if (status) {
+        filtered = filtered.filter(e => e.status === status);
+      }
+      
+      if (dateFrom) {
+        filtered = filtered.filter(e => e.date >= dateFrom);
+      }
+      
+      if (dateTo) {
+        filtered = filtered.filter(e => e.date <= dateTo);
+      }
+      
+      displayEvents(filtered);
+      displayPropertyCoordination(filtered);
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
