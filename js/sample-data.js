@@ -1,7 +1,17 @@
 // Sample Data Initialization for TES Property
 // This script populates Firebase with sample properties, users, and inquiries
+// ⚠️ WARNING: This is for development/testing only. Remove or disable in production!
 
 function initializeSampleData() {
+  // Production safety check
+  if (window.location.hostname !== 'localhost' && 
+      window.location.hostname !== '127.0.0.1' && 
+      !window.location.hostname.includes('127.0.0.1')) {
+    console.warn('⚠️ Sample data initialization is disabled in production environments');
+    alert('Sample data initialization is only available in development mode.');
+    return;
+  }
+  
   if (!database) {
     console.error('Firebase not initialized');
     return;

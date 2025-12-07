@@ -467,10 +467,13 @@
       const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
       const timestamp = new Date().toISOString();
       
+      // Sanitize reason text
+      const sanitizedReason = reason.replace(/[<>]/g, '');
+      
       inquiryRef.update({
         assignedAgentId: newAgentId,
         assignedAgentName: newAgent.name,
-        notes: `${currentInquiry.notes}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${reason}`,
+        notes: `${currentInquiry.notes}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${sanitizedReason}`,
         statusHistory: [
           ...currentInquiry.statusHistory,
           {

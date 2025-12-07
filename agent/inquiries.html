@@ -343,11 +343,15 @@
         
         <div>
           <h4>SMS Templates (Click to copy)</h4>
-          ${smsTemplates.map((template, index) => `
-            <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 0.5rem; cursor: pointer;" onclick="copyToClipboard('${template.replace(/'/g, "\\'")}')">
-              <small>${template}</small>
-            </div>
-          `).join('')}
+          ${smsTemplates.map((template, index) => {
+            // Properly escape template for onclick attribute
+            const escapedTemplate = template.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            return `
+              <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 0.5rem; cursor: pointer;" onclick="copyToClipboard('${escapedTemplate}')">
+                <small>${template}</small>
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
       

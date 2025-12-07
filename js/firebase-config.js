@@ -1,14 +1,15 @@
 // Firebase Configuration
-// Replace with your Firebase project credentials
+// ⚠️ IMPORTANT: Replace with your Firebase project credentials before deployment
+// See FIREBASE-SETUP.md for detailed setup instructions
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "YOUR_API_KEY",                                   // ⚠️ Replace with actual API key
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",           // ⚠️ Replace with actual project ID
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",  // ⚠️ Replace with actual database URL
+  projectId: "YOUR_PROJECT_ID",                            // ⚠️ Replace with actual project ID
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",           // ⚠️ Replace with actual project ID
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",          // ⚠️ Replace with actual sender ID
+  appId: "YOUR_APP_ID"                                    // ⚠️ Replace with actual app ID
 };
 
 // Initialize Firebase
