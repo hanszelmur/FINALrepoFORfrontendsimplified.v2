@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    }
+    
+    .login-card {
+      background-color: var(--white);
+      padding: 3rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-lg);
+      max-width: 400px;
+      width: 90%;
+    }
+    
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .login-header h1 {
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+    
+    .login-header p {
+      color: var(--gray-600);
+    }
+    
+    .test-accounts {
+      background-color: var(--gray-100);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      margin-top: 2rem;
+      font-size: 0.875rem;
+    }
+    
+    .test-accounts h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .test-accounts ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    
+    .test-accounts li {
+      margin-bottom: 0.5rem;
+      color: var(--gray-700);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>🏠 TES Property</h1>
+        <p>Real Estate Inquiry Management System</p>
+      </div>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <span>Remember Me</span>
+          </label>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+      </form>
+      
+      <div class="test-accounts">
+        <h3>Test Accounts</h3>
+        <ul>
+          <li><strong>Admin:</strong> admin@tesproperty.com / admin123</li>
+          <li><strong>Agent:</strong> maria@tesproperty.com / agent123</li>
+          <li><strong>Agent:</strong> pedro@tesproperty.com / agent123</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <script src="../js/utils.js"></script>
+  <script>
+    // Test user accounts (hardcoded for MVP)
+    const testAccounts = {
+      'admin@tesproperty.com': {
+        password: 'admin123',
+        user: { email: 'admin@tesproperty.com', role: 'admin', name: 'Admin User', id: 7 }
+      },
+      'maria@tesproperty.com': {
+        password: 'agent123',
+        user: { email: 'maria@tesproperty.com', role: 'agent', name: 'Maria Santos', id: 1 }
+      },
+      'pedro@tesproperty.com': {
+        password: 'agent123',
+        user: { email: 'pedro@tesproperty.com', role: 'agent', name: 'Pedro Garcia', id: 2 }
+      },
+      'juan@tesproperty.com': {
+        password: 'agent123',
+        user: { email: 'juan@tesproperty.com', role: 'agent', name: 'Juan Dela Cruz', id: 3 }
+      },
+      'anna@tesproperty.com': {
+        password: 'agent123',
+        user: { email: 'anna@tesproperty.com', role: 'agent', name: 'Anna Reyes', id: 4 }
+      },
+      'carlos@tesproperty.com': {
+        password: 'agent123',
+        user: { email: 'carlos@tesproperty.com', role: 'agent', name: 'Carlos Mendoza', id: 5 }
+      },
+      'sofia@tesproperty.com': {
+        password: 'agent123',
+        user: { email: 'sofia@tesproperty.com', role: 'agent', name: 'Sofia Cruz', id: 6 }
+      }
+    };
+    
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const rememberMe = document.getElementById('rememberMe').checked;
+      
+      // Validate credentials
+      const account = testAccounts[email];
+      
+      if (!account) {
+        showAlert('Invalid email address', 'danger');
+        return;
+      }
+      
+      if (account.password !== password) {
+        showAlert('Invalid password', 'danger');
+        return;
+      }
+      
+      // Set current user
+      setCurrentUser(account.user);
+      
+      // Set remember me
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberMe');
+      }
+      
+      showAlert('Login successful! Redirecting...', 'success');
+      
+      // Redirect based on role
+      setTimeout(() => {
+        if (account.user.role === 'admin') {
+          window.location.href = '../admin/dashboard.html';
+        } else if (account.user.role === 'agent') {
+          window.location.href = '../agent/dashboard.html';
+        } else {
+          window.location.href = '../index.html';
+        }
+      }, 1000);
+    });
+    
+    // Check if already logged in
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      if (currentUser.role === 'admin') {
+        window.location.href = '../admin/dashboard.html';
+      } else if (currentUser.role === 'agent') {
+        window.location.href = '../agent/dashboard.html';
+      }
+    }
+  </script>
+</body>
+</html>
