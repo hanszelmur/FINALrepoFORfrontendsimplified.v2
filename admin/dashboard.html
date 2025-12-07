@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Admin</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">Inquiries</a></li>
+          <li><a href="properties.html">Properties</a></li>
+          <li><a href="agents.html">Agents</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="../shared/calendar-view.html">Calendar</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="text-muted">Welcome back, <span id="userName">Admin</span></p>
+      </div>
+      <div>
+        <button onclick="location.reload()" class="btn btn-outline btn-sm">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <!-- Unassigned Inquiries Alert -->
+    <div id="unassignedAlert" class="alert alert-danger" style="display: none;">
+      <strong>⚠️ Urgent:</strong> <span id="unassignedCount">0</span> inquiries have been unassigned for more than 12 hours!
+      <a href="inquiries.html?filter=unassigned" class="btn btn-sm btn-danger" style="margin-left: 1rem;">View Now</a>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          📋
+        </div>
+        <div class="stat-info">
+          <h3 id="newInquiriesToday">0</h3>
+          <p>New Inquiries Today</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          ✅
+        </div>
+        <div class="stat-info">
+          <h3 id="activeInquiries">0</h3>
+          <p>Active Inquiries</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          🏠
+        </div>
+        <div class="stat-info">
+          <h3 id="activeProperties">0</h3>
+          <p>Active Properties</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          💰
+        </div>
+        <div class="stat-info">
+          <h3 id="salesThisMonth">₱0.00</h3>
+          <p>Sales This Month</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Action Items -->
+    <div class="grid grid-cols-2" style="margin-bottom: 2rem;">
+      <div class="card">
+        <div class="card-body">
+          <h3>🔴 Action Items</h3>
+          <div id="actionItems" style="margin-top: 1rem;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-body">
+          <h3>⏰ Reservations Expiring Soon</h3>
+          <div id="expiringReservations" style="margin-top: 1rem;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card">
+      <div class="card-body">
+        <h3>📊 Recent Activity</h3>
+        <div id="recentActivity" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let currentUser = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check authentication
+      if (!checkAuth('admin')) {
+        return;
+      }
+      
+      currentUser = getCurrentUser();
+      document.getElementById('userName').textContent = currentUser.name;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadDashboardData();
+        setupRealTimeListeners();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadDashboardData() {
+      loadStatistics();
+      loadActionItems();
+      loadExpiringReservations();
+      loadRecentActivity();
+    }
+    
+    function loadStatistics() {
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      
+      // Load inquiries
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        const inquiries = Object.values(data);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // New inquiries today
+        const newToday = inquiries.filter(i => {
+          const createdDate = new Date(i.createdAt);
+          createdDate.setHours(0, 0, 0, 0);
+          return createdDate.getTime() === today.getTime();
+        }).length;
+        
+        // Active inquiries
+        const activeStatuses = ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'];
+        const active = inquiries.filter(i => activeStatuses.includes(i.status)).length;
+        
+        // Check for unassigned inquiries over 12 hours
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+        const unassignedOld = inquiries.filter(i => 
+          i.status === 'New' && 
+          !i.assignedAgentId && 
+          new Date(i.createdAt) < twelveHoursAgo
+        ).length;
+        
+        document.getElementById('newInquiriesToday').textContent = newToday;
+        document.getElementById('activeInquiries').textContent = active;
+        
+        if (unassignedOld > 0) {
+          document.getElementById('unassignedAlert').style.display = 'block';
+          document.getElementById('unassignedCount').textContent = unassignedOld;
+        } else {
+          document.getElementById('unassignedAlert').style.display = 'none';
+        }
+      });
+      
+      // Load properties
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        const properties = Object.values(data);
+        const active = properties.filter(p => 
+          ['Available', 'Reserved', 'Pending'].includes(p.status)
+        ).length;
+        
+        // Sales this month
+        const thisMonth = new Date();
+        thisMonth.setDate(1);
+        thisMonth.setHours(0, 0, 0, 0);
+        
+        const salesThisMonth = properties
+          .filter(p => p.status === 'Sold' && p.soldDate && new Date(p.soldDate) >= thisMonth)
+          .reduce((sum, p) => sum + (p.finalSalePrice || p.price), 0);
+        
+        document.getElementById('activeProperties').textContent = active;
+        document.getElementById('salesThisMonth').textContent = formatPHP(salesThisMonth);
+      });
+    }
+    
+    function loadActionItems() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('actionItems');
+        
+        if (!data) {
+          container.innerHTML = '<p class="text-muted">No pending actions</p>';
+          return;
+        }
+        
+        const inquiries = Object.values(data);
+        
+        // Unassigned inquiries
+        const unassigned = inquiries.filter(i => i.status === 'New' && !i.assignedAgentId);
+        
+        // Inquiries pending for more than 24 hours
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const pending = inquiries.filter(i => 
+          i.status === 'Assigned' && 
+          new Date(i.createdAt) < oneDayAgo
+        );
+        
+        const items = [];
+        
+        if (unassigned.length > 0) {
+          items.push(`
+            <div style="padding: 0.75rem; background-color: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+              <strong>${unassigned.length}</strong> unassigned inquiries
+              <a href="inquiries.html?filter=new" class="btn btn-sm btn-primary" style="float: right;">Assign</a>
+            </div>
+          `);
+        }
+        
+        if (pending.length > 0) {
+          items.push(`
+            <div style="padding: 0.75rem; background-color: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+              <strong>${pending.length}</strong> inquiries pending for 24+ hours
+              <a href="inquiries.html?filter=assigned" class="btn btn-sm btn-warning" style="float: right;">Review</a>
+            </div>
+          `);
+        }
+        
+        if (items.length === 0) {
+          container.innerHTML = '<p class="text-muted">✅ All caught up! No pending actions.</p>';
+        } else {
+          container.innerHTML = items.join('');
+        }
+      });
+    }
+    
+    function loadExpiringReservations() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('expiringReservations');
+        
+        if (!data) {
+          container.innerHTML = '<p class="text-muted">No reservations expiring soon</p>';
+          return;
+        }
+        
+        const properties = Object.values(data);
+        const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+        
+        const expiring = properties.filter(p => 
+          p.status === 'Reserved' && 
+          p.reservationExpiry && 
+          new Date(p.reservationExpiry) <= twoDaysFromNow &&
+          new Date(p.reservationExpiry) > new Date()
+        );
+        
+        if (expiring.length === 0) {
+          container.innerHTML = '<p class="text-muted">No reservations expiring in the next 2 days</p>';
+          return;
+        }
+        
+        container.innerHTML = expiring.map(p => `
+          <div style="padding: 0.75rem; background-color: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+            <strong>${p.name}</strong>
+            <span class="badge badge-warning" style="margin-left: 0.5rem;">
+              Expires ${formatDate(p.reservationExpiry)}
+            </span>
+            <a href="properties.html?id=${p.id}" class="btn btn-sm btn-outline" style="float: right;">View</a>
+          </div>
+        `).join('');
+      });
+    }
+    
+    function loadRecentActivity() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('recentActivity');
+        
+        if (!data) {
+          container.innerHTML = '<p class="text-muted">No recent activity</p>';
+          return;
+        }
+        
+        const inquiries = Object.values(data);
+        
+        // Get all status changes
+        const activities = [];
+        inquiries.forEach(inquiry => {
+          if (inquiry.statusHistory) {
+            inquiry.statusHistory.forEach(history => {
+              activities.push({
+                inquiry: inquiry,
+                status: history.status,
+                changedBy: history.changedBy,
+                timestamp: history.timestamp
+              });
+            });
+          }
+        });
+        
+        // Sort by timestamp (most recent first)
+        activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        // Take last 10
+        const recent = activities.slice(0, 10);
+        
+        if (recent.length === 0) {
+          container.innerHTML = '<p class="text-muted">No recent activity</p>';
+          return;
+        }
+        
+        container.innerHTML = `
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Inquiry</th>
+                  <th>Status</th>
+                  <th>Changed By</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recent.map(activity => `
+                  <tr>
+                    <td>${getTimeAgo(activity.timestamp)}</td>
+                    <td>
+                      <strong>${activity.inquiry.propertyName}</strong><br>
+                      <small class="text-muted">${activity.inquiry.customerName}</small>
+                    </td>
+                    <td><span class="badge ${getStatusBadgeClass(activity.status)}">${activity.status}</span></td>
+                    <td>${activity.changedBy}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+    }
+    
+    function setupRealTimeListeners() {
+      // Listen for new inquiries
+      const inquiriesRef = getInquiriesRef();
+      let isFirstLoad = true;
+      
+      inquiriesRef.on('child_added', (snapshot) => {
+        if (isFirstLoad) return; // Skip initial load
+        
+        const inquiry = snapshot.val();
+        showAlert(`New inquiry from ${inquiry.customerName} for ${inquiry.propertyName}`, 'info');
+      });
+      
+      // Mark first load complete after a short delay
+      setTimeout(() => {
+        isFirstLoad = false;
+      }, 1000);
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

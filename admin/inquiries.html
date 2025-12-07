@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inquiry Management - TES Property Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Admin</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">Inquiries</a></li>
+          <li><a href="properties.html">Properties</a></li>
+          <li><a href="agents.html">Agents</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="../shared/calendar-view.html">Calendar</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Inquiry Management</h1>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="New">New</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Waiting - Property Reserved">Waiting - Property Reserved</option>
+            <option value="Viewing Scheduled">Viewing Scheduled</option>
+            <option value="Viewed - Interested">Viewed - Interested</option>
+            <option value="Viewed - Not Interested">Viewed - Not Interested</option>
+            <option value="Viewed - Undecided">Viewed - Undecided</option>
+            <option value="Deposit Paid">Deposit Paid</option>
+            <option value="Successful">Successful</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterAgent">Agent</label>
+          <select id="filterAgent">
+            <option value="">All Agents</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterProperty">Property</label>
+          <select id="filterProperty">
+            <option value="">All Properties</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterDateFrom">Date From</label>
+          <input type="date" id="filterDateFrom">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterDateTo">Date To</label>
+          <input type="date" id="filterDateTo">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inquiries Table -->
+    <div class="card">
+      <div class="card-body">
+        <div id="inquiriesTable">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Assign Inquiry Modal -->
+  <div id="assignModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Assign Inquiry</h2>
+        <button class="modal-close" onclick="closeModal('assignModal')">&times;</button>
+      </div>
+      <div id="assignModalBody">
+        <div class="form-group">
+          <label for="assignAgent">Select Agent</label>
+          <select id="assignAgent">
+            <option value="">Select an agent</option>
+          </select>
+        </div>
+        <div id="agentWarning" class="alert alert-warning" style="display: none; margin-top: 1rem;">
+          ⚠️ This agent has 20+ active inquiries. Consider assigning to another agent.
+        </div>
+        <div id="propertyWarning" class="alert alert-info" style="display: none; margin-top: 1rem;">
+          ℹ️ This property has other active inquiries.
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmAssign()" class="btn btn-primary">Assign</button>
+          <button onclick="closeModal('assignModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reassign Inquiry Modal -->
+  <div id="reassignModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Reassign Inquiry</h2>
+        <button class="modal-close" onclick="closeModal('reassignModal')">&times;</button>
+      </div>
+      <div id="reassignModalBody">
+        <div class="form-group">
+          <label for="reassignAgent">Select New Agent</label>
+          <select id="reassignAgent">
+            <option value="">Select an agent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reassignReason">Reason for Reassignment *</label>
+          <textarea id="reassignReason" rows="3" placeholder="Please provide a reason for reassignment..." required></textarea>
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmReassign()" class="btn btn-primary">Reassign</button>
+          <button onclick="closeModal('reassignModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- View Details Modal -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Inquiry Details</h2>
+        <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+      </div>
+      <div id="detailsModalBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let allInquiries = [];
+    let allAgents = [];
+    let allProperties = [];
+    let currentInquiry = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadAgents();
+        loadProperties();
+        loadInquiries();
+        setupFilters();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadAgents() {
+      const usersRef = getUsersRef();
+      
+      usersRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        allAgents = Object.values(data).filter(u => u.role === 'agent');
+        
+        // Populate agent filters and dropdowns
+        const filterAgent = document.getElementById('filterAgent');
+        const assignAgent = document.getElementById('assignAgent');
+        const reassignAgent = document.getElementById('reassignAgent');
+        
+        filterAgent.innerHTML = '<option value="">All Agents</option>';
+        assignAgent.innerHTML = '<option value="">Select an agent</option>';
+        reassignAgent.innerHTML = '<option value="">Select an agent</option>';
+        
+        allAgents.forEach(agent => {
+          filterAgent.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
+          assignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
+          reassignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
+        });
+      });
+    }
+    
+    function loadProperties() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        allProperties = Object.values(data);
+        
+        const filterProperty = document.getElementById('filterProperty');
+        filterProperty.innerHTML = '<option value="">All Properties</option>';
+        
+        allProperties.forEach(property => {
+          filterProperty.innerHTML += `<option value="${property.id}">${property.name}</option>`;
+        });
+      });
+    }
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            allInquiries.push({ key: key, ...data[key] });
+          });
+          
+          // Sort by date (newest first)
+          allInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        displayInquiries(allInquiries);
+      });
+    }
+    
+    function displayInquiries(inquiries) {
+      const container = document.getElementById('inquiriesTable');
+      
+      if (inquiries.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 2rem;">No inquiries found</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Property</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Agent</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inquiries.map(inquiry => `
+                <tr>
+                  <td>#${inquiry.id}</td>
+                  <td><strong>${inquiry.propertyName}</strong></td>
+                  <td>
+                    ${inquiry.customerName}<br>
+                    <small class="text-muted">${inquiry.customerEmail}</small>
+                  </td>
+                  <td>${inquiry.customerPhone}</td>
+                  <td><span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></td>
+                  <td>${inquiry.assignedAgentName || '<span class="text-muted">Unassigned</span>'}</td>
+                  <td>${formatDate(inquiry.createdAt)}</td>
+                  <td>
+                    <button onclick="viewInquiry('${inquiry.key}')" class="btn btn-sm btn-outline" title="View Details">👁️</button>
+                    ${!inquiry.assignedAgentId ? 
+                      `<button onclick="openAssignModal('${inquiry.key}')" class="btn btn-sm btn-primary" title="Assign">Assign</button>` :
+                      (inquiry.status !== 'Deposit Paid' && inquiry.status !== 'Successful' ?
+                        `<button onclick="openReassignModal('${inquiry.key}')" class="btn btn-sm btn-warning" title="Reassign">Reassign</button>` :
+                        '')
+                    }
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function setupFilters() {
+      const filters = ['filterStatus', 'filterAgent', 'filterProperty', 'filterDateFrom', 'filterDateTo'];
+      filters.forEach(filterId => {
+        document.getElementById(filterId).addEventListener('change', applyFilters);
+      });
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      const agentId = document.getElementById('filterAgent').value;
+      const propertyId = document.getElementById('filterProperty').value;
+      const dateFrom = document.getElementById('filterDateFrom').value;
+      const dateTo = document.getElementById('filterDateTo').value;
+      
+      let filtered = allInquiries;
+      
+      if (status) {
+        filtered = filtered.filter(i => i.status === status);
+      }
+      
+      if (agentId) {
+        filtered = filtered.filter(i => i.assignedAgentId == agentId);
+      }
+      
+      if (propertyId) {
+        filtered = filtered.filter(i => i.propertyId == propertyId);
+      }
+      
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        filtered = filtered.filter(i => new Date(i.createdAt) >= fromDate);
+      }
+      
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(i => new Date(i.createdAt) <= toDate);
+      }
+      
+      displayInquiries(filtered);
+    }
+    
+    function openAssignModal(inquiryKey) {
+      currentInquiry = allInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      // Check for property warnings
+      const propertyInquiries = allInquiries.filter(i => 
+        i.propertyId === currentInquiry.propertyId && 
+        i.key !== inquiryKey &&
+        ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+      );
+      
+      if (propertyInquiries.length > 0) {
+        document.getElementById('propertyWarning').style.display = 'block';
+        document.getElementById('propertyWarning').innerHTML = 
+          `ℹ️ This property has ${propertyInquiries.length} other active inquiry/inquiries.`;
+      } else {
+        document.getElementById('propertyWarning').style.display = 'none';
+      }
+      
+      document.getElementById('assignAgent').value = '';
+      document.getElementById('agentWarning').style.display = 'none';
+      
+      document.getElementById('assignAgent').addEventListener('change', function() {
+        const agentId = parseInt(this.value);
+        const agent = allAgents.find(a => a.id === agentId);
+        
+        if (agent && agent.activeInquiries >= 20) {
+          document.getElementById('agentWarning').style.display = 'block';
+        } else {
+          document.getElementById('agentWarning').style.display = 'none';
+        }
+      });
+      
+      openModal('assignModal');
+    }
+    
+    function confirmAssign() {
+      const agentId = parseInt(document.getElementById('assignAgent').value);
+      
+      if (!agentId) {
+        showAlert('Please select an agent', 'danger');
+        return;
+      }
+      
+      const agent = allAgents.find(a => a.id === agentId);
+      if (!agent) {
+        showAlert('Agent not found', 'danger');
+        return;
+      }
+      
+      // Update inquiry
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      const timestamp = new Date().toISOString();
+      
+      inquiryRef.update({
+        status: 'Assigned',
+        assignedAgentId: agentId,
+        assignedAgentName: agent.name,
+        statusHistory: [
+          ...currentInquiry.statusHistory,
+          {
+            status: 'Assigned',
+            changedBy: 'admin',
+            timestamp: timestamp
+          }
+        ]
+      }).then(() => {
+        // Update agent's active inquiry count
+        const userRef = database.ref(`users/user_${agentId}`);
+        userRef.update({
+          activeInquiries: (agent.activeInquiries || 0) + 1
+        });
+        
+        showAlert('Inquiry assigned successfully', 'success');
+        closeModal('assignModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error assigning inquiry:', error);
+        showAlert('Failed to assign inquiry', 'danger');
+      });
+    }
+    
+    function openReassignModal(inquiryKey) {
+      currentInquiry = allInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      // Check if reassignment is allowed
+      if (currentInquiry.status === 'Deposit Paid' || currentInquiry.status === 'Successful') {
+        showAlert('Cannot reassign inquiries with status "Deposit Paid" or "Successful"', 'danger');
+        return;
+      }
+      
+      document.getElementById('reassignAgent').value = '';
+      document.getElementById('reassignReason').value = '';
+      
+      openModal('reassignModal');
+    }
+    
+    function confirmReassign() {
+      const newAgentId = parseInt(document.getElementById('reassignAgent').value);
+      const reason = document.getElementById('reassignReason').value.trim();
+      
+      if (!newAgentId) {
+        showAlert('Please select an agent', 'danger');
+        return;
+      }
+      
+      if (!reason) {
+        showAlert('Please provide a reason for reassignment', 'danger');
+        return;
+      }
+      
+      const newAgent = allAgents.find(a => a.id === newAgentId);
+      const oldAgent = allAgents.find(a => a.id === currentInquiry.assignedAgentId);
+      
+      if (!newAgent) {
+        showAlert('Agent not found', 'danger');
+        return;
+      }
+      
+      // Update inquiry
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      const timestamp = new Date().toISOString();
+      
+      inquiryRef.update({
+        assignedAgentId: newAgentId,
+        assignedAgentName: newAgent.name,
+        notes: `${currentInquiry.notes}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${reason}`,
+        statusHistory: [
+          ...currentInquiry.statusHistory,
+          {
+            status: 'Reassigned',
+            changedBy: 'admin',
+            timestamp: timestamp,
+            note: `Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${reason}`
+          }
+        ]
+      }).then(() => {
+        // Update agent counts
+        if (oldAgent) {
+          database.ref(`users/user_${oldAgent.id}`).update({
+            activeInquiries: Math.max(0, (oldAgent.activeInquiries || 0) - 1)
+          });
+        }
+        
+        database.ref(`users/user_${newAgentId}`).update({
+          activeInquiries: (newAgent.activeInquiries || 0) + 1
+        });
+        
+        showAlert('Inquiry reassigned successfully', 'success');
+        closeModal('reassignModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error reassigning inquiry:', error);
+        showAlert('Failed to reassign inquiry', 'danger');
+      });
+    }
+    
+    function viewInquiry(inquiryKey) {
+      const inquiry = allInquiries.find(i => i.key === inquiryKey);
+      if (!inquiry) return;
+      
+      const modalBody = document.getElementById('detailsModalBody');
+      
+      modalBody.innerHTML = `
+        <div class="grid grid-cols-2" style="gap: 1.5rem;">
+          <div>
+            <h4>Customer Information</h4>
+            <p><strong>Name:</strong> ${inquiry.customerName}</p>
+            <p><strong>Email:</strong> ${inquiry.customerEmail}</p>
+            <p><strong>Phone:</strong> ${inquiry.customerPhone}</p>
+            <p><strong>Preferred Contact:</strong> ${inquiry.preferredContact}</p>
+            <p><strong>Number of Guests:</strong> ${inquiry.numberOfGuests}</p>
+          </div>
+          
+          <div>
+            <h4>Inquiry Details</h4>
+            <p><strong>Property:</strong> ${inquiry.propertyName}</p>
+            <p><strong>Status:</strong> <span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></p>
+            <p><strong>Assigned Agent:</strong> ${inquiry.assignedAgentName || 'Unassigned'}</p>
+            <p><strong>Created:</strong> ${formatDateTime(inquiry.createdAt)}</p>
+            <p><strong>No-Show Count:</strong> ${inquiry.noShowCount || 0}</p>
+          </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+          <h4>Message</h4>
+          <p style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius);">
+            ${inquiry.message}
+          </p>
+        </div>
+        
+        ${inquiry.notes ? `
+          <div style="margin-top: 1.5rem;">
+            <h4>Notes</h4>
+            <p style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); white-space: pre-wrap;">
+              ${inquiry.notes}
+            </p>
+          </div>
+        ` : ''}
+        
+        <div style="margin-top: 1.5rem;">
+          <h4>Status History</h4>
+          <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius);">
+            ${inquiry.statusHistory.map(h => `
+              <div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-300);">
+                <strong>${h.status}</strong> - ${formatDateTime(h.timestamp)}<br>
+                <small class="text-muted">by ${h.changedBy}${h.note ? ' - ' + h.note : ''}</small>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      
+      openModal('detailsModal');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

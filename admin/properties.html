@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Property Management - TES Property Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Admin</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">Inquiries</a></li>
+          <li><a href="properties.html">Properties</a></li>
+          <li><a href="agents.html">Agents</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="../shared/calendar-view.html">Calendar</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <h1>Property Management</h1>
+      <button onclick="openAddPropertyModal()" class="btn btn-primary">+ Add Property</button>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="Available">Available</option>
+            <option value="Reserved">Reserved</option>
+            <option value="Pending">Pending</option>
+            <option value="Sold">Sold</option>
+            <option value="Withdrawn">Withdrawn</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterType">Property Type</label>
+          <select id="filterType">
+            <option value="">All Types</option>
+            <option value="House">House</option>
+            <option value="Condo">Condo</option>
+            <option value="Townhouse">Townhouse</option>
+            <option value="Lot">Lot</option>
+            <option value="Commercial">Commercial</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="viewType">View</label>
+          <select id="viewType" onchange="toggleView()">
+            <option value="grid">Grid View</option>
+            <option value="table">Table View</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Properties Grid -->
+    <div id="propertiesGrid" class="grid grid-cols-3" style="margin-top: 2rem;">
+      <div class="spinner"></div>
+    </div>
+    
+    <!-- Properties Table -->
+    <div id="propertiesTable" class="card" style="display: none; margin-top: 2rem;">
+      <div class="card-body">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add/Edit Property Modal -->
+  <div id="propertyModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="propertyModalTitle">Add Property</h2>
+        <button class="modal-close" onclick="closeModal('propertyModal')">&times;</button>
+      </div>
+      <form id="propertyForm">
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="propertyName">Property Name *</label>
+            <input type="text" id="propertyName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="propertyType">Property Type *</label>
+            <select id="propertyType" required>
+              <option value="House">House</option>
+              <option value="Condo">Condo</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Lot">Lot</option>
+              <option value="Commercial">Commercial</option>
+            </select>
+          </div>
+        </div>
+        
+        <h4 style="margin-top: 1.5rem;">Address</h4>
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="street">Street *</label>
+            <input type="text" id="street" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="barangay">Barangay *</label>
+            <input type="text" id="barangay" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input type="text" id="city" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="province">Province *</label>
+            <input type="text" id="province" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="zip">ZIP Code *</label>
+            <input type="text" id="zip" maxlength="4" required>
+          </div>
+        </div>
+        
+        <h4 style="margin-top: 1.5rem;">Details</h4>
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="price">Price (₱) *</label>
+            <input type="number" id="price" min="100000" max="999999999" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="floorArea">Floor Area (m²)</label>
+            <input type="number" id="floorArea" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="bedrooms">Bedrooms</label>
+            <input type="number" id="bedrooms" min="0" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="bathrooms">Bathrooms</label>
+            <input type="number" id="bathrooms" min="0" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="reservationFee">Reservation Fee (₱) *</label>
+            <input type="number" id="reservationFee" min="0" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="commission">Commission (₱) *</label>
+            <input type="number" id="commission" min="0" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea id="description" rows="4" required></textarea>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary">Save Property</button>
+          <button type="button" onclick="closeModal('propertyModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let allProperties = [];
+    let currentProperty = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadProperties();
+        setupFilters();
+        setupForm();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadProperties() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allProperties = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            allProperties.push({ key: key, ...data[key] });
+          });
+          
+          allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        displayProperties(allProperties);
+      });
+    }
+    
+    function displayProperties(properties) {
+      const grid = document.getElementById('propertiesGrid');
+      const table = document.getElementById('propertiesTable');
+      const viewType = document.getElementById('viewType').value;
+      
+      if (properties.length === 0) {
+        grid.innerHTML = '<p class="text-muted" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No properties found</p>';
+        return;
+      }
+      
+      if (viewType === 'grid') {
+        grid.innerHTML = properties.map(property => `
+          <div class="card">
+            <img src="${property.photos && property.photos[0] ? property.photos[0].url : 'https://via.placeholder.com/400x300?text=Property'}" 
+                 alt="${property.name}" 
+                 class="card-img">
+            <div class="card-body">
+              <div class="d-flex justify-between align-center" style="margin-bottom: 0.5rem;">
+                <h3 class="card-title" style="margin-bottom: 0;">${property.name}</h3>
+                <span class="badge ${getStatusBadgeClass(property.status)}">${property.status}</span>
+              </div>
+              
+              <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                ${formatAddress(property.address)}
+              </p>
+              
+              <p style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem;">
+                ${formatPHP(property.price)}
+              </p>
+              
+              <p class="card-text" style="margin-bottom: 1rem;">
+                ${property.propertyType} • ${property.floorArea}m²
+              </p>
+              
+              <div class="d-flex gap-1">
+                <button onclick="editProperty('${property.key}')" class="btn btn-sm btn-outline" style="flex: 1;">Edit</button>
+                <button onclick="changeStatus('${property.key}')" class="btn btn-sm btn-primary" style="flex: 1;">Status</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        table.querySelector('.card-body').innerHTML = `
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${properties.map(property => `
+                  <tr>
+                    <td><strong>${property.name}</strong></td>
+                    <td>${property.propertyType}</td>
+                    <td>${property.address.city}, ${property.address.province}</td>
+                    <td>${formatPHP(property.price)}</td>
+                    <td><span class="badge ${getStatusBadgeClass(property.status)}">${property.status}</span></td>
+                    <td>
+                      <button onclick="editProperty('${property.key}')" class="btn btn-sm btn-outline">Edit</button>
+                      <button onclick="changeStatus('${property.key}')" class="btn btn-sm btn-primary">Status</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+    
+    function toggleView() {
+      const viewType = document.getElementById('viewType').value;
+      const grid = document.getElementById('propertiesGrid');
+      const table = document.getElementById('propertiesTable');
+      
+      if (viewType === 'grid') {
+        grid.style.display = 'grid';
+        table.style.display = 'none';
+      } else {
+        grid.style.display = 'none';
+        table.style.display = 'block';
+      }
+      
+      displayProperties(allProperties);
+    }
+    
+    function setupFilters() {
+      document.getElementById('filterStatus').addEventListener('change', applyFilters);
+      document.getElementById('filterType').addEventListener('change', applyFilters);
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      const type = document.getElementById('filterType').value;
+      
+      let filtered = allProperties;
+      
+      if (status) {
+        filtered = filtered.filter(p => p.status === status);
+      }
+      
+      if (type) {
+        filtered = filtered.filter(p => p.propertyType === type);
+      }
+      
+      displayProperties(filtered);
+    }
+    
+    function openAddPropertyModal() {
+      currentProperty = null;
+      document.getElementById('propertyModalTitle').textContent = 'Add Property';
+      document.getElementById('propertyForm').reset();
+      openModal('propertyModal');
+    }
+    
+    function editProperty(propertyKey) {
+      currentProperty = allProperties.find(p => p.key === propertyKey);
+      if (!currentProperty) return;
+      
+      document.getElementById('propertyModalTitle').textContent = 'Edit Property';
+      document.getElementById('propertyName').value = currentProperty.name;
+      document.getElementById('propertyType').value = currentProperty.propertyType;
+      document.getElementById('street').value = currentProperty.address.street;
+      document.getElementById('barangay').value = currentProperty.address.barangay;
+      document.getElementById('city').value = currentProperty.address.city;
+      document.getElementById('province').value = currentProperty.address.province;
+      document.getElementById('zip').value = currentProperty.address.zip;
+      document.getElementById('price').value = currentProperty.price;
+      document.getElementById('floorArea').value = currentProperty.floorArea || '';
+      document.getElementById('bedrooms').value = currentProperty.bedrooms || 0;
+      document.getElementById('bathrooms').value = currentProperty.bathrooms || 0;
+      document.getElementById('reservationFee').value = currentProperty.reservationFee;
+      document.getElementById('commission').value = currentProperty.commission;
+      document.getElementById('description').value = currentProperty.description;
+      
+      openModal('propertyModal');
+    }
+    
+    function setupForm() {
+      document.getElementById('propertyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+          name: document.getElementById('propertyName').value.trim(),
+          propertyType: document.getElementById('propertyType').value,
+          address: {
+            street: document.getElementById('street').value.trim(),
+            barangay: document.getElementById('barangay').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            province: document.getElementById('province').value.trim(),
+            zip: document.getElementById('zip').value.trim()
+          },
+          price: parseFloat(document.getElementById('price').value),
+          floorArea: parseFloat(document.getElementById('floorArea').value) || 0,
+          bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
+          bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
+          reservationFee: parseFloat(document.getElementById('reservationFee').value),
+          commission: parseFloat(document.getElementById('commission').value),
+          description: document.getElementById('description').value.trim()
+        };
+        
+        if (currentProperty) {
+          // Update existing property
+          const propertyRef = database.ref(`properties/${currentProperty.key}`);
+          propertyRef.update(formData)
+            .then(() => {
+              showAlert('Property updated successfully', 'success');
+              closeModal('propertyModal');
+              currentProperty = null;
+            })
+            .catch(error => {
+              console.error('Error updating property:', error);
+              showAlert('Failed to update property', 'danger');
+            });
+        } else {
+          // Add new property
+          const propertiesRef = getPropertiesRef();
+          const newPropertyKey = propertiesRef.push().key;
+          
+          const property = {
+            id: Date.now(),
+            ...formData,
+            status: 'Available',
+            photos: [
+              { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
+            ],
+            createdAt: new Date().toISOString()
+          };
+          
+          propertiesRef.child(newPropertyKey).set(property)
+            .then(() => {
+              showAlert('Property added successfully', 'success');
+              closeModal('propertyModal');
+            })
+            .catch(error => {
+              console.error('Error adding property:', error);
+              showAlert('Failed to add property', 'danger');
+            });
+        }
+      });
+    }
+    
+    function changeStatus(propertyKey) {
+      const property = allProperties.find(p => p.key === propertyKey);
+      if (!property) return;
+      
+      const newStatus = prompt(`Current status: ${property.status}\n\nEnter new status:\n- Available\n- Reserved\n- Pending\n- Sold\n- Withdrawn`, property.status);
+      
+      if (!newStatus || newStatus === property.status) return;
+      
+      const validStatuses = ['Available', 'Reserved', 'Pending', 'Sold', 'Withdrawn'];
+      if (!validStatuses.includes(newStatus)) {
+        showAlert('Invalid status', 'danger');
+        return;
+      }
+      
+      const propertyRef = database.ref(`properties/${propertyKey}`);
+      const updates = { status: newStatus };
+      
+      if (newStatus === 'Sold') {
+        const finalPrice = prompt('Enter final sale price:', property.price);
+        if (finalPrice) {
+          updates.finalSalePrice = parseFloat(finalPrice);
+          updates.soldDate = new Date().toISOString();
+        }
+      }
+      
+      propertyRef.update(updates)
+        .then(() => {
+          showAlert('Property status updated successfully', 'success');
+        })
+        .catch(error => {
+          console.error('Error updating status:', error);
+          showAlert('Failed to update status', 'danger');
+        });
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>
