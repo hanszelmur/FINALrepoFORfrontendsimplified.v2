@@ -10,3 +10,5 @@ export * from './rate-limiter';
 export * from './calendar-conflict';
 export * from './agent-stats';
 export * from './expiry-checker';
+export * from './migration';
+export * from './sw-register';

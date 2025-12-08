@@ -2,8 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Issue 27: Prevent iOS zoom with proper viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>TES Property - Find Your Dream Home</title>
+  
+  <!-- PWA Meta Tags (Issue 24) -->
+  <meta name="description" content="Browse quality properties in Metro Manila and nearby areas. Real Estate Inquiry Management System.">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/assets/icon-192x192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TES Property">
+  
+  <!-- Issue 20: Skip to content link for keyboard navigation -->
+  <a href="#main-content" class="sr-only skip-link">Skip to main content</a>
+  
   <script type="module" src="/src/main.ts"></script>
 </head>
 <body x-data="propertyBrowser()">
@@ -45,19 +61,29 @@
   </nav>
   
   <!-- Hero Section -->
-  <section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
+  <section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20" role="banner">
     <div class="container mx-auto px-4 text-center">
       <h1 class="text-4xl md:text-5xl font-bold mb-4">Find Your Dream Home</h1>
       <p class="text-xl md:text-2xl opacity-90">Browse quality properties in Metro Manila and nearby areas</p>
     </div>
   </section>
   
+  <!-- Main Content (Issue 20) -->
+  <main id="main-content">
+  
   <!-- Filters -->
-  <section class="container mx-auto px-4 py-8">
+  <section class="container mx-auto px-4 py-8" aria-label="Property filters">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Issue 20, 21: Keyboard navigation and ARIA labels -->
       <div class="form-group mb-0">
         <label for="filterPrice" class="form-label">Price Range</label>
-        <select id="filterPrice" x-model="filters.price" @change="applyFilters()" class="form-select">
+        <select 
+          id="filterPrice" 
+          x-model="filters.price" 
+          @change="applyFilters()" 
+          class="form-select"
+          aria-label="Filter by price range"
+          tabindex="0">
           <option value="">All Prices</option>
           <option value="0-1000000">Under ₱1M</option>
           <option value="1000000-3000000">₱1M - ₱3M</option>
@@ -105,24 +131,57 @@
     </div>
   </section>
   
+  <!-- Issue 4: Refresh Controls -->
+  <section class="container mx-auto px-4 pb-4">
+    <div class="refresh-controls">
+      <button 
+        @click="manualRefresh()" 
+        :disabled="isRefreshing"
+        :class="{ 'btn-loading': isRefreshing }"
+        class="btn btn-secondary btn-sm touch-target"
+        aria-label="Refresh properties">
+        <span x-show="!isRefreshing">🔄 Refresh</span>
+        <span x-show="isRefreshing">Refreshing...</span>
+      </button>
+      <span class="last-refresh-time" aria-live="polite">
+        Last updated: <span x-text="lastRefreshTime"></span>
+      </span>
+    </div>
+  </section>
+
   <!-- Properties Grid -->
-  <section class="container mx-auto px-4 pb-16">
-    <!-- Loading state -->
-    <div x-show="loading" class="text-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+  <section class="container mx-auto px-4 pb-16" aria-label="Property listings">
+    <!-- Loading state (Issue 10) -->
+    <div x-show="loading" class="text-center py-12" role="status" aria-live="polite">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto" aria-hidden="true"></div>
       <p class="mt-4 text-gray-600">Loading properties...</p>
     </div>
     
-    <!-- Properties -->
-    <div x-show="!loading && filteredProperties.length > 0" 
-         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <template x-for="property in filteredProperties" :key="property.id">
-        <div class="card overflow-hidden">
-          <img :src="property.photos[0]" :alt="property.name" class="w-full h-48 object-cover">
+    <!-- Properties (Issue 17, 18, 19) -->
+    <div x-show="!loading && paginatedProperties.length > 0" 
+         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+         role="list">
+      <template x-for="property in paginatedProperties" :key="property.id">
+        <article class="card overflow-hidden" role="listitem" :data-property-id="property.id">
+          <!-- Issue 18: Lazy load images -->
+          <img 
+            :src="getFirstPhoto(property)" 
+            :alt="property.name + ' - Property photo'" 
+            class="w-full h-48 object-cover" 
+            loading="lazy">
           <div class="p-4">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-xl font-semibold" x-text="property.name"></h3>
-              <span :class="'badge badge-' + property.status.toLowerCase()" x-text="property.status"></span>
+              <!-- Issue 22: Status badge with icon -->
+              <span 
+                :class="'status-badge status-badge-' + property.status.toLowerCase()" 
+                role="status"
+                :aria-label="'Property status: ' + property.status">
+                <svg class="status-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <circle cx="10" cy="10" r="6" />
+                </svg>
+                <span x-text="property.status"></span>
+              </span>
             </div>
             <p class="text-gray-600 text-sm mb-2" x-text="property.address.city + ', ' + property.address.province"></p>
             <p class="text-2xl font-bold text-primary-600 mb-2" x-text="formatPHP(property.price)"></p>
@@ -132,20 +191,52 @@
                 <span class="text-xs bg-gray-100 px-2 py-1 rounded" x-text="feature"></span>
               </template>
             </div>
-            <a :href="'/property-details.html?id=' + property.id" 
-               class="btn btn-primary w-full">View Details</a>
+            <a 
+              :href="'/property-details.html?id=' + property.id" 
+              class="btn btn-primary w-full touch-target"
+              :aria-label="'View details for ' + property.name">
+              View Details
+            </a>
           </div>
-        </div>
+        </article>
       </template>
+    </div>
+    
+    <!-- Issue 17: Pagination -->
+    <div x-show="!loading && paginatedProperties.length > 0" class="pagination" role="navigation" aria-label="Pagination">
+      <button 
+        @click="previousPage()" 
+        :disabled="currentPage === 1"
+        class="pagination-btn touch-target"
+        aria-label="Previous page">
+        ← Previous
+      </button>
+      
+      <span class="pagination-info" aria-live="polite">
+        Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span>
+        (<span x-text="filteredProperties.length"></span> properties)
+      </span>
+      
+      <button 
+        @click="nextPage()" 
+        :disabled="currentPage === totalPages"
+        class="pagination-btn touch-target"
+        aria-label="Next page">
+        Next →
+      </button>
     </div>
     
     <!-- No properties -->
     <div x-show="!loading && filteredProperties.length === 0" 
-         class="text-center py-12">
+         class="text-center py-12"
+         role="status"
+         aria-live="polite">
       <h3 class="text-2xl font-semibold mb-2">No properties found</h3>
       <p class="text-gray-600">Try adjusting your filters</p>
     </div>
   </section>
+  
+  </main>
   
   <!-- Contact Section -->
   <section id="contact" class="bg-white py-16">

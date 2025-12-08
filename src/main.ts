@@ -4,6 +4,7 @@ import { isInitialized, loadSampleData, getProperties } from './utils';
 import { formatPHP } from './utils/formatter';
 import { setupGlobalErrorHandlers } from './utils/error-handler';
 import { runMigrations } from './utils/migration';
+import { registerServiceWorker } from './utils/sw-register';
 import type { Property } from './types';
 
 // Setup global error handlers (Issue 7)
@@ -17,6 +18,15 @@ if (!isInitialized()) {
   loadSampleData();
   // eslint-disable-next-line no-console
   console.log('Sample data loaded successfully!');
+}
+
+// Issue 25: Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    registerServiceWorker().catch((error) => {
+      console.error('[SW] Registration error:', error);
+    });
+  });
 }
 
 // Issue 16: Track intervals for cleanup
