@@ -1,4 +1,4 @@
-import type { Property, Inquiry, User, CalendarEvent, PropertyPhoto } from '../types';
+import type { Property, Inquiry, User, CalendarEvent } from '../types';
 import {
   saveProperties,
   saveInquiries,
@@ -6,15 +6,6 @@ import {
   saveCalendarEvents,
   setInitialized,
 } from './storage';
-
-// Helper to convert photo URLs to PropertyPhoto format
-function toPhotos(urls: string[]): PropertyPhoto[] {
-  return urls.map((url, index) => ({
-    data: url,
-    caption: '',
-    order: index,
-  }));
-}
 
 export function loadSampleData(): void {
   const properties: Property[] = [
@@ -31,10 +22,10 @@ export function loadSampleData(): void {
       price: 3500000,
       status: 'Available',
       type: 'House',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
         'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9',
-      ]),
+      ],
       description: 'Beautiful 3-bedroom house with modern amenities in prime Makati location.',
       features: ['3 Bedrooms', '2 Bathrooms', 'Garage', 'Garden', '150 sqm'],
       reservationFee: 100000,
@@ -54,10 +45,10 @@ export function loadSampleData(): void {
       price: 5200000,
       status: 'Available',
       type: 'Condo',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00',
         'https://images.unsplash.com/photo-1512917774080-9991f1c4c750',
-      ]),
+      ],
       description: 'Luxury 2-bedroom condo with stunning ocean views in BGC.',
       features: ['2 Bedrooms', '2 Bathrooms', 'Balcony', 'Pool Access', '95 sqm'],
       reservationFee: 150000,
@@ -77,10 +68,10 @@ export function loadSampleData(): void {
       price: 4800000,
       status: 'Reserved',
       type: 'Townhouse',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1580587771525-78b9dba3b914',
         'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
-      ]),
+      ],
       description: 'Contemporary 3-bedroom townhouse in a gated community.',
       features: ['3 Bedrooms', '3 Bathrooms', '2 Parking', 'Rooftop', '120 sqm'],
       reservationFee: 120000,
@@ -100,10 +91,10 @@ export function loadSampleData(): void {
       price: 2800000,
       status: 'Available',
       type: 'Condo',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
         'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2',
-      ]),
+      ],
       description: 'Affordable 1-bedroom apartment perfect for young professionals.',
       features: ['1 Bedroom', '1 Bathroom', 'Parking', 'Gym Access', '45 sqm'],
       reservationFee: 80000,
@@ -123,10 +114,10 @@ export function loadSampleData(): void {
       price: 8500000,
       status: 'Pending',
       type: 'House',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6',
         'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c',
-      ]),
+      ],
       description: 'Elegant 5-bedroom house with expansive garden area.',
       features: ['5 Bedrooms', '4 Bathrooms', '3 Parking', 'Garden', '300 sqm'],
       reservationFee: 200000,
@@ -146,10 +137,10 @@ export function loadSampleData(): void {
       price: 1200000,
       status: 'Available',
       type: 'Lot',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1500382017468-9049fed747ef',
         'https://images.unsplash.com/photo-1464146072230-91cabc968266',
-      ]),
+      ],
       description: 'Residential lot in a prime location, ready for development.',
       features: ['250 sqm', 'Clean Title', 'Flood-free', 'Near Highway'],
       reservationFee: 50000,
@@ -169,10 +160,10 @@ export function loadSampleData(): void {
       price: 12000000,
       status: 'Available',
       type: 'House',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2',
         'https://images.unsplash.com/photo-1502005097973-6a7082348e28',
-      ]),
+      ],
       description: 'Stunning beach house with private beach access.',
       features: ['4 Bedrooms', '3 Bathrooms', 'Beach Access', 'Pool', '250 sqm'],
       reservationFee: 300000,
@@ -192,10 +183,10 @@ export function loadSampleData(): void {
       price: 1800000,
       status: 'Available',
       type: 'Condo',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
         'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af',
-      ]),
+      ],
       description: 'Perfect starter home for singles or couples.',
       features: ['Studio', '1 Bathroom', 'Parking', 'Near MRT', '28 sqm'],
       reservationFee: 60000,
@@ -215,10 +206,10 @@ export function loadSampleData(): void {
       price: 25000000,
       status: 'Available',
       type: 'Commercial',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab',
         'https://images.unsplash.com/photo-1449844908441-8829872d2607',
-      ]),
+      ],
       description: 'Prime commercial lot along EDSA, perfect for business.',
       features: ['500 sqm', 'Corner Lot', 'High Traffic', 'Commercial Zone'],
       reservationFee: 500000,
@@ -238,10 +229,10 @@ export function loadSampleData(): void {
       price: 6200000,
       status: 'Available',
       type: 'Townhouse',
-      photos: toPhotos([
+      photos: [
         'https://images.unsplash.com/photo-1600585154526-990dced4db0d',
         'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde',
-      ]),
+      ],
       description: 'Spacious family home with modern amenities.',
       features: ['4 Bedrooms', '3 Bathrooms', '2 Parking', 'Garden', '180 sqm'],
       reservationFee: 150000,
@@ -259,6 +250,7 @@ export function loadSampleData(): void {
       role: 'admin',
       phone: '0917-000-0000',
       active: true,
+      activeInquiries: 0,
       createdAt: '2025-01-01T00:00:00Z',
     },
     {
@@ -269,6 +261,7 @@ export function loadSampleData(): void {
       role: 'agent',
       phone: '0917-111-1111',
       active: true,
+      activeInquiries: 8,
       createdAt: '2025-01-01T00:00:00Z',
     },
     {
@@ -279,6 +272,7 @@ export function loadSampleData(): void {
       role: 'agent',
       phone: '0917-222-2222',
       active: true,
+      activeInquiries: 5,
       createdAt: '2025-01-01T00:00:00Z',
     },
     {
@@ -289,6 +283,7 @@ export function loadSampleData(): void {
       role: 'agent',
       phone: '0917-333-3333',
       active: true,
+      activeInquiries: 3,
       createdAt: '2025-01-01T00:00:00Z',
     },
     {
@@ -299,6 +294,7 @@ export function loadSampleData(): void {
       role: 'agent',
       phone: '0917-444-4444',
       active: true,
+      activeInquiries: 6,
       createdAt: '2025-01-01T00:00:00Z',
     },
     {
@@ -309,6 +305,7 @@ export function loadSampleData(): void {
       role: 'agent',
       phone: '0917-555-5555',
       active: true,
+      activeInquiries: 4,
       createdAt: '2025-01-01T00:00:00Z',
     },
     {
@@ -319,6 +316,7 @@ export function loadSampleData(): void {
       role: 'agent',
       phone: '0917-666-6666',
       active: true,
+      activeInquiries: 7,
       createdAt: '2025-01-01T00:00:00Z',
     },
   ];

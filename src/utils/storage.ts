@@ -1,4 +1,11 @@
+/**
+ * Storage Utilities with Error Handling
+ * Issue 7: All localStorage operations wrapped in try-catch
+ * Issue 14: TODO - Add optimistic locking for multi-admin support
+ */
+
 import type { Property, Inquiry, User, CalendarEvent } from '../types';
+import { safeLocalStorageGet, safeLocalStorageSet, safeLocalStorageRemove, logError } from './error-handler';
 
 const STORAGE_KEYS = {
   PROPERTIES: 'tes_properties',
@@ -9,155 +16,243 @@ const STORAGE_KEYS = {
   INITIALIZED: 'tes_initialized',
 };
 
+/**
+ * TODO [Issue 14 - Race Conditions]:
+ * When multiple admins are supported in the future, implement optimistic locking:
+ * 1. Add 'version' field to all entities
+ * 2. Increment version on each update
+ * 3. Check version before saving (if mismatch, show conflict resolution UI)
+ * 4. Example: if (entity.version !== currentVersion) throw new ConflictError()
+ * 
+ * Current limitation: Last write wins. Race conditions possible with multiple admins.
+ */
+
 // Properties
 export function getProperties(): Property[] {
-  const data = localStorage.getItem(STORAGE_KEYS.PROPERTIES);
-  return data ? JSON.parse(data) : [];
+  return safeLocalStorageGet<Property[]>(STORAGE_KEYS.PROPERTIES, []);
 }
 
-export function saveProperties(properties: Property[]): void {
-  localStorage.setItem(STORAGE_KEYS.PROPERTIES, JSON.stringify(properties));
+export function saveProperties(properties: Property[]): boolean {
+  return safeLocalStorageSet(STORAGE_KEYS.PROPERTIES, properties);
 }
 
 export function getPropertyById(id: number): Property | undefined {
-  const properties = getProperties();
-  return properties.find((p) => p.id === id);
-}
-
-export function addProperty(property: Property): void {
-  const properties = getProperties();
-  properties.push(property);
-  saveProperties(properties);
-}
-
-export function updateProperty(id: number, updates: Partial<Property>): void {
-  const properties = getProperties();
-  const index = properties.findIndex((p) => p.id === id);
-  if (index !== -1) {
-    properties[index] = { ...properties[index], ...updates };
-    saveProperties(properties);
+  try {
+    const properties = getProperties();
+    return properties.find((p) => p.id === id);
+  } catch (error) {
+    logError('getPropertyById', error);
+    return undefined;
   }
 }
 
-export function deleteProperty(id: number): void {
-  const properties = getProperties();
-  const filtered = properties.filter((p) => p.id !== id);
-  saveProperties(filtered);
+export function addProperty(property: Property): boolean {
+  try {
+    const properties = getProperties();
+    properties.push(property);
+    return saveProperties(properties);
+  } catch (error) {
+    logError('addProperty', error);
+    return false;
+  }
+}
+
+export function updateProperty(id: number, updates: Partial<Property>): boolean {
+  try {
+    const properties = getProperties();
+    const index = properties.findIndex((p) => p.id === id);
+    if (index !== -1) {
+      properties[index] = { ...properties[index], ...updates };
+      return saveProperties(properties);
+    }
+    return false;
+  } catch (error) {
+    logError('updateProperty', error);
+    return false;
+  }
+}
+
+export function deleteProperty(id: number): boolean {
+  try {
+    const properties = getProperties();
+    const filtered = properties.filter((p) => p.id !== id);
+    return saveProperties(filtered);
+  } catch (error) {
+    logError('deleteProperty', error);
+    return false;
+  }
 }
 
 // Inquiries
 export function getInquiries(): Inquiry[] {
-  const data = localStorage.getItem(STORAGE_KEYS.INQUIRIES);
-  return data ? JSON.parse(data) : [];
+  return safeLocalStorageGet<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
 }
 
-export function saveInquiries(inquiries: Inquiry[]): void {
-  localStorage.setItem(STORAGE_KEYS.INQUIRIES, JSON.stringify(inquiries));
+export function saveInquiries(inquiries: Inquiry[]): boolean {
+  return safeLocalStorageSet(STORAGE_KEYS.INQUIRIES, inquiries);
 }
 
 export function getInquiryById(id: number): Inquiry | undefined {
-  const inquiries = getInquiries();
-  return inquiries.find((i) => i.id === id);
-}
-
-export function addInquiry(inquiry: Inquiry): void {
-  const inquiries = getInquiries();
-  inquiries.push(inquiry);
-  saveInquiries(inquiries);
-}
-
-export function updateInquiry(id: number, updates: Partial<Inquiry>): void {
-  const inquiries = getInquiries();
-  const index = inquiries.findIndex((i) => i.id === id);
-  if (index !== -1) {
-    inquiries[index] = { ...inquiries[index], ...updates, updatedAt: new Date().toISOString() };
-    saveInquiries(inquiries);
+  try {
+    const inquiries = getInquiries();
+    return inquiries.find((i) => i.id === id);
+  } catch (error) {
+    logError('getInquiryById', error);
+    return undefined;
   }
 }
 
-export function deleteInquiry(id: number): void {
-  const inquiries = getInquiries();
-  const filtered = inquiries.filter((i) => i.id !== id);
-  saveInquiries(filtered);
+export function addInquiry(inquiry: Inquiry): boolean {
+  try {
+    const inquiries = getInquiries();
+    inquiries.push(inquiry);
+    return saveInquiries(inquiries);
+  } catch (error) {
+    logError('addInquiry', error);
+    return false;
+  }
+}
+
+export function updateInquiry(id: number, updates: Partial<Inquiry>): boolean {
+  try {
+    const inquiries = getInquiries();
+    const index = inquiries.findIndex((i) => i.id === id);
+    if (index !== -1) {
+      inquiries[index] = { ...inquiries[index], ...updates, updatedAt: new Date().toISOString() };
+      return saveInquiries(inquiries);
+    }
+    return false;
+  } catch (error) {
+    logError('updateInquiry', error);
+    return false;
+  }
+}
+
+export function deleteInquiry(id: number): boolean {
+  try {
+    const inquiries = getInquiries();
+    const filtered = inquiries.filter((i) => i.id !== id);
+    return saveInquiries(filtered);
+  } catch (error) {
+    logError('deleteInquiry', error);
+    return false;
+  }
 }
 
 // Users
 export function getUsers(): User[] {
-  const data = localStorage.getItem(STORAGE_KEYS.USERS);
-  return data ? JSON.parse(data) : [];
+  return safeLocalStorageGet<User[]>(STORAGE_KEYS.USERS, []);
 }
 
-export function saveUsers(users: User[]): void {
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+export function saveUsers(users: User[]): boolean {
+  return safeLocalStorageSet(STORAGE_KEYS.USERS, users);
 }
 
 export function getUserById(id: number): User | undefined {
-  const users = getUsers();
-  return users.find((u) => u.id === id);
+  try {
+    const users = getUsers();
+    return users.find((u) => u.id === id);
+  } catch (error) {
+    logError('getUserById', error);
+    return undefined;
+  }
 }
 
 export function getUserByEmail(email: string): User | undefined {
-  const users = getUsers();
-  return users.find((u) => u.email === email);
+  try {
+    const users = getUsers();
+    return users.find((u) => u.email === email);
+  } catch (error) {
+    logError('getUserByEmail', error);
+    return undefined;
+  }
 }
 
 // Calendar
 export function getCalendarEvents(): CalendarEvent[] {
-  const data = localStorage.getItem(STORAGE_KEYS.CALENDAR);
-  return data ? JSON.parse(data) : [];
+  return safeLocalStorageGet<CalendarEvent[]>(STORAGE_KEYS.CALENDAR, []);
 }
 
-export function saveCalendarEvents(events: CalendarEvent[]): void {
-  localStorage.setItem(STORAGE_KEYS.CALENDAR, JSON.stringify(events));
+export function saveCalendarEvents(events: CalendarEvent[]): boolean {
+  return safeLocalStorageSet(STORAGE_KEYS.CALENDAR, events);
 }
 
-export function addCalendarEvent(event: CalendarEvent): void {
-  const events = getCalendarEvents();
-  events.push(event);
-  saveCalendarEvents(events);
-}
-
-export function updateCalendarEvent(id: number, updates: Partial<CalendarEvent>): void {
-  const events = getCalendarEvents();
-  const index = events.findIndex((e) => e.id === id);
-  if (index !== -1) {
-    events[index] = { ...events[index], ...updates };
-    saveCalendarEvents(events);
+export function addCalendarEvent(event: CalendarEvent): boolean {
+  try {
+    const events = getCalendarEvents();
+    events.push(event);
+    return saveCalendarEvents(events);
+  } catch (error) {
+    logError('addCalendarEvent', error);
+    return false;
   }
 }
 
-export function deleteCalendarEvent(id: number): void {
-  const events = getCalendarEvents();
-  const filtered = events.filter((e) => e.id !== id);
-  saveCalendarEvents(filtered);
+export function updateCalendarEvent(id: number, updates: Partial<CalendarEvent>): boolean {
+  try {
+    const events = getCalendarEvents();
+    const index = events.findIndex((e) => e.id === id);
+    if (index !== -1) {
+      events[index] = { ...events[index], ...updates };
+      return saveCalendarEvents(events);
+    }
+    return false;
+  } catch (error) {
+    logError('updateCalendarEvent', error);
+    return false;
+  }
+}
+
+export function deleteCalendarEvent(id: number): boolean {
+  try {
+    const events = getCalendarEvents();
+    const filtered = events.filter((e) => e.id !== id);
+    return saveCalendarEvents(filtered);
+  } catch (error) {
+    logError('deleteCalendarEvent', error);
+    return false;
+  }
 }
 
 // Current User
 export function getCurrentUser(): User | null {
-  const data = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-  return data ? JSON.parse(data) : null;
+  return safeLocalStorageGet<User | null>(STORAGE_KEYS.CURRENT_USER, null);
 }
 
-export function setCurrentUser(user: User | null): void {
-  if (user) {
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+export function setCurrentUser(user: User | null): boolean {
+  try {
+    if (user) {
+      return safeLocalStorageSet(STORAGE_KEYS.CURRENT_USER, user);
+    } else {
+      return safeLocalStorageRemove(STORAGE_KEYS.CURRENT_USER);
+    }
+  } catch (error) {
+    logError('setCurrentUser', error);
+    return false;
   }
 }
 
 // Initialization flag
 export function isInitialized(): boolean {
-  return localStorage.getItem(STORAGE_KEYS.INITIALIZED) === 'true';
+  try {
+    return safeLocalStorageGet<string>(STORAGE_KEYS.INITIALIZED, 'false') === 'true';
+  } catch (error) {
+    logError('isInitialized', error);
+    return false;
+  }
 }
 
-export function setInitialized(value: boolean): void {
-  localStorage.setItem(STORAGE_KEYS.INITIALIZED, value.toString());
+export function setInitialized(value: boolean): boolean {
+  return safeLocalStorageSet(STORAGE_KEYS.INITIALIZED, value.toString());
 }
 
 // Clear all data
 export function clearAllData(): void {
-  Object.values(STORAGE_KEYS).forEach((key) => {
-    localStorage.removeItem(key);
-  });
+  try {
+    Object.values(STORAGE_KEYS).forEach((key) => {
+      safeLocalStorageRemove(key);
+    });
+  } catch (error) {
+    logError('clearAllData', error);
+  }
 }

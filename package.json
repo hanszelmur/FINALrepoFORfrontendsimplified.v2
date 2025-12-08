@@ -11,7 +11,11 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "alpinejs": "^3.13.3"
+    "alpinejs": "^3.13.3",
+    "browser-image-compression": "^2.0.2",
+    "dompurify": "^3.3.1",
+    "joi": "^18.0.2",
+    "workbox-window": "^7.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
