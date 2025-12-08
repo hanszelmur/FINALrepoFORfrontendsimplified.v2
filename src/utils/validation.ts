@@ -33,11 +33,7 @@ export function validateZipCode(zip: string): boolean {
 }
 
 // Duplicate inquiry detection
-export function checkDuplicateInquiry(
-  email: string,
-  phone: string,
-  propertyId: number
-): boolean {
+export function checkDuplicateInquiry(email: string, phone: string, propertyId: number): boolean {
   const inquiries = getInquiries();
   const activeStatuses: InquiryStatus[] = [
     'New',
@@ -73,11 +69,7 @@ export function isValidStatusTransition(
   const validTransitions: Record<InquiryStatus, InquiryStatus[]> = {
     New: ['Assigned', 'Cancelled'],
     Assigned: ['In Progress', 'Cancelled'],
-    'In Progress': [
-      'Waiting - Property Reserved',
-      'Viewing Scheduled',
-      'Cancelled',
-    ],
+    'In Progress': ['Waiting - Property Reserved', 'Viewing Scheduled', 'Cancelled'],
     'Waiting - Property Reserved': ['Viewing Scheduled', 'Cancelled'],
     'Viewing Scheduled': [
       'Viewed - Interested',
@@ -87,11 +79,7 @@ export function isValidStatusTransition(
     ],
     'Viewed - Interested': ['Deposit Paid', 'Cancelled'],
     'Viewed - Not Interested': ['Cancelled'],
-    'Viewed - Undecided': [
-      'Viewed - Interested',
-      'Viewed - Not Interested',
-      'Cancelled',
-    ],
+    'Viewed - Undecided': ['Viewed - Interested', 'Viewed - Not Interested', 'Cancelled'],
     'Deposit Paid': ['Successful', 'Cancelled'],
     Successful: [],
     Cancelled: [],

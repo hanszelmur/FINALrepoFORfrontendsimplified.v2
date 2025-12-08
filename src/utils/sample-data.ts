@@ -26,8 +26,7 @@ export function loadSampleData(): void {
         'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
         'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9',
       ],
-      description:
-        'Beautiful 3-bedroom house with modern amenities in prime Makati location.',
+      description: 'Beautiful 3-bedroom house with modern amenities in prime Makati location.',
       features: ['3 Bedrooms', '2 Bathrooms', 'Garage', 'Garden', '150 sqm'],
       reservationFee: 100000,
       commission: 70000,

@@ -24,9 +24,7 @@ export function formatPhoneNumber(phone: string): string {
 
   // Format as 0917-123-4567
   if (cleaned.length === 11 && cleaned.startsWith('0')) {
-    return (
-      cleaned.substring(0, 4) + '-' + cleaned.substring(4, 7) + '-' + cleaned.substring(7)
-    );
+    return cleaned.substring(0, 4) + '-' + cleaned.substring(4, 7) + '-' + cleaned.substring(7);
   }
 
   return phone; // Return original if format doesn't match
