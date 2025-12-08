@@ -8,6 +8,5 @@ export interface User {
   role: UserRole;
   phone: string;
   active: boolean;
-  activeInquiries: number;
   createdAt: string;
 }

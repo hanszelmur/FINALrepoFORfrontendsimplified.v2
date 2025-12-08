@@ -1,5 +1,5 @@
 import { getInquiries } from './storage';
-import type { InquiryStatus } from '../types';
+import type { InquiryStatus, Inquiry } from '../types';
 
 // Email validation
 export function validateEmail(email: string): boolean {
@@ -7,19 +7,28 @@ export function validateEmail(email: string): boolean {
   return re.test(String(email).toLowerCase());
 }
 
+/**
+ * Normalize phone number for comparison
+ * Issue 5: Normalize phone numbers before duplicate detection
+ */
+export function normalizePhoneNumber(phone: string): string {
+  // Remove all non-digit characters
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // Convert +63 to 0
+  if (cleaned.startsWith('63')) {
+    cleaned = '0' + cleaned.substring(2);
+  }
+  
+  return cleaned;
+}
+
 // Philippine phone number validation
 export function validatePhoneNumber(phone: string): boolean {
-  const cleaned = phone.replace(/\D/g, '');
+  const cleaned = normalizePhoneNumber(phone);
 
-  // Should be 11 digits starting with 09 or 12 digits starting with 63
-  if (cleaned.length === 11 && cleaned.startsWith('09')) {
-    return true;
-  }
-  if (cleaned.length === 12 && cleaned.startsWith('63')) {
-    return true;
-  }
-
-  return false;
+  // Should be 11 digits starting with 09
+  return cleaned.length === 11 && cleaned.startsWith('09');
 }
 
 // Price validation
@@ -32,8 +41,24 @@ export function validateZipCode(zip: string): boolean {
   return /^\d{4}$/.test(zip);
 }
 
-// Duplicate inquiry detection
-export function checkDuplicateInquiry(email: string, phone: string, propertyId: number): boolean {
+/**
+ * Duplicate inquiry detection with enhanced phone matching
+ * Issue 5: Check email OR phone against all active inquiries
+ * 
+ * @param email - Customer email to check
+ * @param phone - Customer phone to check (will be normalized)
+ * @param propertyId - Property ID to check against
+ * @returns Object with isDuplicate flag and existingInquiry if found
+ * 
+ * **Breaking Change from v1**: Returns object instead of boolean
+ * - Old: `const isDuplicate = checkDuplicateInquiry(email, phone, propertyId)`
+ * - New: `const { isDuplicate, existingInquiry } = checkDuplicateInquiry(email, phone, propertyId)`
+ */
+export function checkDuplicateInquiry(
+  email: string,
+  phone: string,
+  propertyId: number
+): { isDuplicate: boolean; existingInquiry?: Inquiry } {
   const inquiries = getInquiries();
   const activeStatuses: InquiryStatus[] = [
     'New',
@@ -46,12 +71,34 @@ export function checkDuplicateInquiry(email: string, phone: string, propertyId: 
     'Deposit Paid',
   ];
 
-  return inquiries.some(
-    (inq) =>
-      (inq.customerEmail === email || inq.customerPhone === phone) &&
-      inq.propertyId === propertyId &&
-      activeStatuses.includes(inq.status)
-  );
+  const normalizedPhone = normalizePhoneNumber(phone);
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const existingInquiry = inquiries.find((inq) => {
+    if (inq.propertyId !== propertyId) return false;
+    if (!activeStatuses.includes(inq.status)) return false;
+
+    const inquiryPhone = normalizePhoneNumber(inq.customerPhone);
+    const inquiryEmail = inq.customerEmail.toLowerCase().trim();
+
+    return inquiryEmail === normalizedEmail || inquiryPhone === normalizedPhone;
+  });
+
+  return {
+    isDuplicate: !!existingInquiry,
+    existingInquiry,
+  };
+}
+
+/**
+ * Get duplicate inquiry error message with details
+ */
+export function getDuplicateInquiryMessage(inquiry: Inquiry): string {
+  const statusText = inquiry.status;
+  const agentText = inquiry.assignedAgentName
+    ? ` (Assigned to: ${inquiry.assignedAgentName})`
+    : '';
+  return `You already have an active inquiry for this property with status "${statusText}"${agentText}. Please contact us if you need to update your inquiry.`;
 }
 
 // Check if inquiry can be reassigned
