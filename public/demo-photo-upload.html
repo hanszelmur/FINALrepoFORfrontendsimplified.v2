@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Photo Upload Demo - TES Property</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <script type="module" src="/src/main.ts"></script>
+  <style>
+    body {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-3xl font-bold mb-6">Photo Upload Demonstration</h1>
+    
+    <div class="card p-6 mb-6">
+      <h2 class="text-2xl font-semibold mb-4">Features Demonstrated:</h2>
+      <ul class="list-disc list-inside space-y-2 text-gray-700">
+        <li><strong>Issue 3:</strong> Photo upload with base64 conversion and compression</li>
+        <li><strong>Max 10 photos,</strong> 2MB each with automatic compression to 500KB</li>
+        <li><strong>Preview:</strong> See uploaded images immediately</li>
+        <li><strong>Captions:</strong> Add optional captions to each photo</li>
+        <li><strong>Reorder:</strong> Use up/down arrows or drag-and-drop to reorder</li>
+        <li><strong>Delete:</strong> Remove unwanted photos</li>
+        <li><strong>Validation:</strong> File type and size validation</li>
+        <li><strong>Accessibility:</strong> ARIA labels, keyboard navigation, touch targets</li>
+        <li><strong>Responsive:</strong> Works on all screen sizes</li>
+      </ul>
+    </div>
+
+    <!-- Photo Upload Demo -->
+    <div class="card p-6">
+      <h2 class="text-2xl font-semibold mb-4">Add Property Photos</h2>
+      
+      <!-- Photo upload container will be rendered here -->
+      <div id="photoUploadDemo"></div>
+
+      <!-- Display JSON output for debugging -->
+      <div class="mt-6 p-4 bg-gray-100 rounded-lg">
+        <h3 class="font-semibold mb-2">Current Photos Data (JSON):</h3>
+        <pre id="photoDataOutput" class="text-xs overflow-auto max-h-60 bg-white p-3 rounded border">[]</pre>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-4 mt-6">
+        <button 
+          id="saveBtn" 
+          class="btn btn-primary touch-target"
+          aria-label="Save photos to localStorage">
+          💾 Save to LocalStorage
+        </button>
+        <button 
+          id="loadBtn" 
+          class="btn btn-secondary touch-target"
+          aria-label="Load photos from localStorage">
+          📂 Load from LocalStorage
+        </button>
+        <button 
+          id="clearBtn" 
+          class="btn btn-danger touch-target"
+          aria-label="Clear all photos">
+          🗑️ Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card p-6 mt-6 bg-blue-50 border-blue-200">
+      <h3 class="text-xl font-semibold mb-3">💡 Instructions:</h3>
+      <ol class="list-decimal list-inside space-y-2 text-gray-700">
+        <li>Click "📷 Select Photos" to choose images from your device</li>
+        <li>You can select multiple images at once</li>
+        <li>Images will be automatically compressed if they exceed 500KB</li>
+        <li>Add captions to describe each photo (optional)</li>
+        <li>Use ↑ and ↓ buttons to reorder photos</li>
+        <li>Click × to delete a photo</li>
+        <li>Click "💾 Save to LocalStorage" to persist photos</li>
+        <li>Refresh the page and click "📂 Load from LocalStorage" to restore</li>
+      </ol>
+    </div>
+
+    <!-- Accessibility Info -->
+    <div class="card p-6 mt-6 bg-green-50 border-green-200">
+      <h3 class="text-xl font-semibold mb-3">♿ Accessibility Features:</h3>
+      <ul class="list-disc list-inside space-y-2 text-gray-700">
+        <li>All buttons have ARIA labels</li>
+        <li>Minimum 44x44px touch targets</li>
+        <li>Keyboard navigation with Tab key</li>
+        <li>Screen reader friendly</li>
+        <li>High contrast mode support</li>
+        <li>Reduced motion support</li>
+        <li>Form inputs prevent iOS zoom (16px font)</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    import { renderPhotoUploadUI } from '/src/utils/ui-helpers.ts';
+    import { showSuccessMessage, showErrorMessage } from '/src/utils/error-handler.ts';
+
+    // State
+    let currentPhotos = [];
+
+    // Initialize
+    function init() {
+      renderPhotoUploadUI(
+        'photoUploadDemo',
+        currentPhotos,
+        handlePhotosChange,
+        10
+      );
+
+      // Setup button handlers
+      document.getElementById('saveBtn').addEventListener('click', savePhotos);
+      document.getElementById('loadBtn').addEventListener('click', loadPhotos);
+      document.getElementById('clearBtn').addEventListener('click', clearPhotos);
+    }
+
+    // Handle photos change
+    function handlePhotosChange(photos) {
+      currentPhotos = photos;
+      updatePhotoDataOutput();
+    }
+
+    // Update JSON output display
+    function updatePhotoDataOutput() {
+      const output = document.getElementById('photoDataOutput');
+      if (output) {
+        // Only show metadata (without full base64 data for readability)
+        const metadata = currentPhotos.map((photo, index) => ({
+          order: photo.order,
+          caption: photo.caption,
+          size: Math.round(photo.data.length * 0.75 / 1024) + ' KB', // Approximate size
+          hasData: !!photo.data
+        }));
+        output.textContent = JSON.stringify(metadata, null, 2);
+      }
+    }
+
+    // Save photos to localStorage
+    function savePhotos() {
+      try {
+        localStorage.setItem('demo_photos', JSON.stringify(currentPhotos));
+        showSuccessMessage(`Saved ${currentPhotos.length} photo(s) to LocalStorage`);
+      } catch (error) {
+        console.error('[Save] Error:', error);
+        showErrorMessage('Failed to save photos. Storage might be full.');
+      }
+    }
+
+    // Load photos from localStorage
+    function loadPhotos() {
+      try {
+        const data = localStorage.getItem('demo_photos');
+        if (data) {
+          currentPhotos = JSON.parse(data);
+          renderPhotoUploadUI(
+            'photoUploadDemo',
+            currentPhotos,
+            handlePhotosChange,
+            10
+          );
+          showSuccessMessage(`Loaded ${currentPhotos.length} photo(s) from LocalStorage`);
+        } else {
+          showErrorMessage('No photos found in LocalStorage');
+        }
+      } catch (error) {
+        console.error('[Load] Error:', error);
+        showErrorMessage('Failed to load photos');
+      }
+    }
+
+    // Clear all photos
+    function clearPhotos() {
+      if (confirm('Are you sure you want to clear all photos?')) {
+        currentPhotos = [];
+        localStorage.removeItem('demo_photos');
+        renderPhotoUploadUI(
+          'photoUploadDemo',
+          currentPhotos,
+          handlePhotosChange,
+          10
+        );
+        showSuccessMessage('All photos cleared');
+      }
+    }
+
+    // Start
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

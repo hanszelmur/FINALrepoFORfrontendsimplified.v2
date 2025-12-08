@@ -85,7 +85,7 @@ export function checkStorageQuota(): { used: number; available: number; percenta
   try {
     // Calculate used space
     for (const key in localStorage) {
-      if (localStorage.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
         used += localStorage[key].length + key.length;
       }
     }

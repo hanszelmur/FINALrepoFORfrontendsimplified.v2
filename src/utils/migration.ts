@@ -50,9 +50,11 @@ export function runMigrations(): void {
       const firstPhoto = properties[0].photos[0];
       // If it's a string, we need to migrate
       if (typeof firstPhoto === 'string') {
+        // eslint-disable-next-line no-console
         console.log('[Migration] Converting photos to new format...');
         const migratedProperties = migratePropertiesPhotos(properties);
         localStorage.setItem('tes_properties', JSON.stringify(migratedProperties));
+        // eslint-disable-next-line no-console
         console.log('[Migration] Photo format migration complete');
       }
     }

@@ -143,10 +143,12 @@ export function runDailyExpiryCheck(): ExpiryWarning[] {
 
   // Log warnings for debugging
   if (warnings.length > 0) {
+    // eslint-disable-next-line no-console
     console.log(
       `[Expiry Check] Found ${warnings.length} reservation(s) expiring soon or expired`
     );
     warnings.forEach((w) => {
+      // eslint-disable-next-line no-console
       console.log(`  - ${w.message} (Customer: ${w.inquiry.customerName})`);
     });
   }

@@ -132,6 +132,7 @@ export function getRateLimitMessage(email: string): string {
 export function clearRateLimits(): void {
   try {
     localStorage.removeItem(RATE_LIMIT_KEY);
+    // eslint-disable-next-line no-console
     console.log('[Rate Limit] All rate limits cleared');
   } catch (error) {
     console.error('[Rate Limit] Failed to clear rate limits:', error);

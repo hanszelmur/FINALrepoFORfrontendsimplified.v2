@@ -12,3 +12,4 @@ export * from './agent-stats';
 export * from './expiry-checker';
 export * from './migration';
 export * from './sw-register';
+export * from './ui-helpers';
