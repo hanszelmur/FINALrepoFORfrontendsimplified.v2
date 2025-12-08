@@ -32,6 +32,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "src/types/alpinejs.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
