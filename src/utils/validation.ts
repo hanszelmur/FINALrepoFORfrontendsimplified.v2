@@ -44,6 +44,15 @@ export function validateZipCode(zip: string): boolean {
 /**
  * Duplicate inquiry detection with enhanced phone matching
  * Issue 5: Check email OR phone against all active inquiries
+ * 
+ * @param email - Customer email to check
+ * @param phone - Customer phone to check (will be normalized)
+ * @param propertyId - Property ID to check against
+ * @returns Object with isDuplicate flag and existingInquiry if found
+ * 
+ * **Breaking Change from v1**: Returns object instead of boolean
+ * - Old: `const isDuplicate = checkDuplicateInquiry(email, phone, propertyId)`
+ * - New: `const { isDuplicate, existingInquiry } = checkDuplicateInquiry(email, phone, propertyId)`
  */
 export function checkDuplicateInquiry(
   email: string,

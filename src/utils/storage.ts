@@ -2,6 +2,12 @@
  * Storage Utilities with Error Handling
  * Issue 7: All localStorage operations wrapped in try-catch
  * Issue 14: TODO - Add optimistic locking for multi-admin support
+ * 
+ * **Breaking Change from v1**: All write operations now return boolean success indicators
+ * - Old: `addProperty(property)` - returns void
+ * - New: `const success = addProperty(property)` - returns boolean
+ * 
+ * This allows callers to handle storage errors appropriately without try-catch
  */
 
 import type { Property, Inquiry, User, CalendarEvent } from '../types';

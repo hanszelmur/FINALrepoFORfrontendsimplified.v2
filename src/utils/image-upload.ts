@@ -6,8 +6,18 @@
 import imageCompression from 'browser-image-compression';
 import type { PropertyPhoto } from '../types';
 
-const MAX_PHOTOS = 10;
-const MAX_FILE_SIZE_MB = 2;
+// Configuration constants - adjust these for different requirements
+export const IMAGE_CONFIG = {
+  MAX_PHOTOS: 10,
+  MAX_FILE_SIZE_MB: 2,
+  COMPRESSED_SIZE_MB: 0.5, // Target size after compression
+  MAX_DIMENSION: 1920, // Max width or height in pixels
+  OUTPUT_FORMAT: 'image/jpeg' as const,
+  USE_WEB_WORKER: true,
+} as const;
+
+const MAX_PHOTOS = IMAGE_CONFIG.MAX_PHOTOS;
+const MAX_FILE_SIZE_MB = IMAGE_CONFIG.MAX_FILE_SIZE_MB;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 /**
@@ -27,10 +37,10 @@ export async function compressAndConvertImage(file: File): Promise<string> {
   try {
     // Compression options
     const options = {
-      maxSizeMB: 0.5, // Compress to max 500KB
-      maxWidthOrHeight: 1920, // Max dimension
-      useWebWorker: true,
-      fileType: 'image/jpeg',
+      maxSizeMB: IMAGE_CONFIG.COMPRESSED_SIZE_MB,
+      maxWidthOrHeight: IMAGE_CONFIG.MAX_DIMENSION,
+      useWebWorker: IMAGE_CONFIG.USE_WEB_WORKER,
+      fileType: IMAGE_CONFIG.OUTPUT_FORMAT,
     };
 
     // Compress the image

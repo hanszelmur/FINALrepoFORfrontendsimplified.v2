@@ -45,18 +45,27 @@ export function runMigrations(): void {
 
     const properties = JSON.parse(propertiesData) as Property[];
     
-    // Check if migration needed (check first property)
-    if (properties.length > 0 && properties[0].photos.length > 0) {
-      const firstPhoto = properties[0].photos[0];
-      // If it's a string, we need to migrate
-      if (typeof firstPhoto === 'string') {
-        // eslint-disable-next-line no-console
-        console.log('[Migration] Converting photos to new format...');
-        const migratedProperties = migratePropertiesPhotos(properties);
-        localStorage.setItem('tes_properties', JSON.stringify(migratedProperties));
-        // eslint-disable-next-line no-console
-        console.log('[Migration] Photo format migration complete');
+    // Check if migration needed by checking any property with photos
+    let needsMigration = false;
+    
+    for (const property of properties) {
+      if (property.photos && property.photos.length > 0) {
+        const firstPhoto = property.photos[0];
+        // If any photo is a string, we need to migrate all
+        if (typeof firstPhoto === 'string') {
+          needsMigration = true;
+          break;
+        }
       }
+    }
+    
+    if (needsMigration) {
+      // eslint-disable-next-line no-console
+      console.log('[Migration] Converting photos to new format...');
+      const migratedProperties = migratePropertiesPhotos(properties);
+      localStorage.setItem('tes_properties', JSON.stringify(migratedProperties));
+      // eslint-disable-next-line no-console
+      console.log('[Migration] Photo format migration complete');
     }
   } catch (error) {
     console.error('[Migration] Error during migration:', error);

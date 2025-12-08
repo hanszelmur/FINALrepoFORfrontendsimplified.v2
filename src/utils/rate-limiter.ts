@@ -8,9 +8,16 @@ interface RateLimitAttempt {
   timestamp: number;
 }
 
-const RATE_LIMIT_KEY = 'tes_rate_limits';
-const MAX_ATTEMPTS = 3;
-const TIME_WINDOW_MS = 60 * 1000; // 1 minute
+// Configuration constants - adjust for different environments
+export const RATE_LIMIT_CONFIG = {
+  STORAGE_KEY: 'tes_rate_limits',
+  MAX_ATTEMPTS: 3, // Maximum attempts per time window
+  TIME_WINDOW_MS: 60 * 1000, // 1 minute in milliseconds
+} as const;
+
+const RATE_LIMIT_KEY = RATE_LIMIT_CONFIG.STORAGE_KEY;
+const MAX_ATTEMPTS = RATE_LIMIT_CONFIG.MAX_ATTEMPTS;
+const TIME_WINDOW_MS = RATE_LIMIT_CONFIG.TIME_WINDOW_MS;
 
 /**
  * Get rate limit attempts from storage

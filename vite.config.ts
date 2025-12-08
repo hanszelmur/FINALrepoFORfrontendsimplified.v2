@@ -11,6 +11,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Sourcemaps disabled for production to reduce bundle size
+    // Enable for staging/debugging: set to true or 'hidden'
     sourcemap: false,
     minify: 'terser',
     terserOptions: {
