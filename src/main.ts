@@ -27,47 +27,47 @@ Alpine.data('propertyBrowser', (): any => {
     },
 
     init() {
-    this.loadProperties();
-    // Auto-refresh every 30 seconds
-    setInterval(() => this.loadProperties(), 30000);
-  },
+      this.loadProperties();
+      // Auto-refresh every 30 seconds
+      setInterval(() => this.loadProperties(), 30000);
+    },
 
-  loadProperties() {
-    this.allProperties = getProperties().filter(
-      (p) => p.status === 'Available' || p.status === 'Reserved' || p.status === 'Pending'
-    );
-    this.filteredProperties = this.allProperties;
-    this.loading = false;
-  },
+    loadProperties() {
+      this.allProperties = getProperties().filter(
+        (p) => p.status === 'Available' || p.status === 'Reserved' || p.status === 'Pending'
+      );
+      this.filteredProperties = this.allProperties;
+      this.loading = false;
+    },
 
-  applyFilters() {
-    this.filteredProperties = this.allProperties.filter((property: Property) => {
-      // Price filter
-      if (this.filters.price) {
-        const [min, max] = this.filters.price.split('-').map(Number);
-        if (property.price < min || property.price > max) return false;
-      }
+    applyFilters() {
+      this.filteredProperties = this.allProperties.filter((property: Property) => {
+        // Price filter
+        if (this.filters.price) {
+          const [min, max] = this.filters.price.split('-').map(Number);
+          if (property.price < min || property.price > max) return false;
+        }
 
-      // Type filter
-      if (this.filters.type && property.type !== this.filters.type) {
-        return false;
-      }
+        // Type filter
+        if (this.filters.type && property.type !== this.filters.type) {
+          return false;
+        }
 
-      // Location filter
-      if (this.filters.location && !property.address.city.includes(this.filters.location)) {
-        return false;
-      }
+        // Location filter
+        if (this.filters.location && !property.address.city.includes(this.filters.location)) {
+          return false;
+        }
 
-      // Status filter
-      if (this.filters.status && property.status !== this.filters.status) {
-        return false;
-      }
+        // Status filter
+        if (this.filters.status && property.status !== this.filters.status) {
+          return false;
+        }
 
-      return true;
-    });
-  },
+        return true;
+      });
+    },
 
-  formatPHP(amount: number) {
+    formatPHP(amount: number) {
       return formatPHP(amount);
     },
   };
