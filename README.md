@@ -460,16 +460,54 @@ npm install
 
 ### Development Mode
 
+#### ⚡ Multi-Port SPA Architecture (NEW!)
+
+Each portal (Customer, Admin, Agent) now runs on its own dedicated port as a TRUE Single Page Application:
+
+```bash
+# Option 1: Run all portals simultaneously
+npm run dev:all
+
+# This starts:
+# - Backend server: http://localhost:3000 (JSON file operations)
+# - Customer portal: http://localhost:3001 (Property browsing)
+# - Admin portal: http://localhost:3002 (Admin dashboard)
+# - Agent portal: http://localhost:3003 (Agent dashboard)
+```
+
+```bash
+# Option 2: Run individual portals
+npm run backend           # Backend only (port 3000)
+npm run dev:customer      # Customer portal only (port 3001)
+npm run dev:admin         # Admin portal only (port 3002)
+npm run dev:agent         # Agent portal only (port 3003)
+```
+
+**Key Features:**
+- ✅ **TRUE SPAs**: All content embedded in single HTML file (no fetch/AJAX loading)
+- ✅ **Hash Routing**: Navigate with `#dashboard`, `#inquiries`, etc.
+- ✅ **Browser Back/Forward**: Works seamlessly
+- ✅ **Same Tab Navigation**: No page reloads
+- ✅ **Independent Portals**: Each can run standalone
+- ✅ **Data Sync**: Backend syncs data across all portals
+
+**Testing Data Sync:**
+1. Open Admin portal: `http://localhost:3002`
+2. Login and add a new property
+3. Open Customer portal: `http://localhost:3001`
+4. Property appears automatically (within 30 seconds)
+5. Backend must be running for data to sync
+
 #### Option 1: Frontend Only (Uses localStorage)
 
 ```bash
-# Start Vite dev server
+# Start Vite dev server (legacy single-port mode)
 npm run dev
 
 # Open browser to http://localhost:5173
 ```
 
-#### Option 2: With Backend Server
+#### Option 2: With Backend Server (legacy)
 
 ```bash
 # Terminal 1: Start backend server
@@ -485,13 +523,26 @@ npm run dev:full
 ### Production Build
 
 ```bash
-# Build for production
+# Build all portals for production
+npm run build:all
+
+# This creates:
+# - dist/customer/ - Customer portal build
+# - dist/admin/ - Admin portal build
+# - dist/agent/ - Agent portal build
+
+# Or build individual portals
+npm run build:customer
+npm run build:admin
+npm run build:agent
+
+# Legacy build (single portal)
 npm run build
 
 # Preview production build
 npm run preview
 
-# Deploy dist/ folder to any static host
+# Deploy dist/ folders to static hosts
 ```
 
 ### Test Accounts
@@ -618,6 +669,14 @@ This is a frontend-only MVP with intentional limitations:
 - **Express.js** - Simple REST API server
 - **Node.js** - JavaScript runtime
 - **CORS** - Cross-origin requests
+- **Concurrently** - Run multiple servers simultaneously
+
+### Architecture
+- **Multi-Port SPA** - Each portal runs on dedicated port
+- **Hash Routing** - Client-side navigation without page reloads
+- **TRUE SPA** - All content embedded in single HTML files
+- **Backend API** - RESTful endpoints on port 3000
+- **Independent Portals** - Customer (3001), Admin (3002), Agent (3003)
 
 ### Reporting
 - **jsPDF** - PDF generation
