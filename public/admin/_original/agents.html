@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Management - TES Property Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Admin</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">Inquiries</a></li>
+          <li><a href="properties.html">Properties</a></li>
+          <li><a href="agents.html">Agents</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="../shared/calendar-view.html">Calendar</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Agent Management</h1>
+    
+    <!-- Agents Table -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <div id="agentsTable">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Agent Details Modal -->
+  <div id="agentModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Agent Performance</h2>
+        <button class="modal-close" onclick="closeModal('agentModal')">&times;</button>
+      </div>
+      <div id="agentModalBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let allAgents = [];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadAgents();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadAgents() {
+      const usersRef = getUsersRef();
+      
+      usersRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allAgents = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const user = data[key];
+            if (user.role === 'agent') {
+              allAgents.push({ key: key, ...user });
+            }
+          });
+          
+          allAgents.sort((a, b) => (b.totalCommission || 0) - (a.totalCommission || 0));
+        }
+        
+        displayAgents();
+      });
+    }
+    
+    function displayAgents() {
+      const container = document.getElementById('agentsTable');
+      
+      if (allAgents.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 2rem;">No agents found</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Active Inquiries</th>
+                <th>Properties Sold</th>
+                <th>Total Commission</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allAgents.map(agent => `
+                <tr>
+                  <td><strong>${agent.name}</strong></td>
+                  <td>${agent.email}</td>
+                  <td>${agent.phone || 'N/A'}</td>
+                  <td>${agent.activeInquiries || 0}</td>
+                  <td>${agent.propertiesSold || 0}</td>
+                  <td>${formatPHP(agent.totalCommission || 0)}</td>
+                  <td>
+                    <button onclick="viewAgentDetails('${agent.key}')" class="btn btn-sm btn-primary">View Details</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function viewAgentDetails(agentKey) {
+      const agent = allAgents.find(a => a.key === agentKey);
+      if (!agent) return;
+      
+      const modalBody = document.getElementById('agentModalBody');
+      
+      modalBody.innerHTML = `
+        <div class="stats-grid" style="margin-bottom: 2rem;">
+          <div class="stat-card">
+            <div class="stat-icon primary">📋</div>
+            <div class="stat-info">
+              <h3>${agent.activeInquiries || 0}</h3>
+              <p>Active Inquiries</p>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon success">🏠</div>
+            <div class="stat-info">
+              <h3>${agent.propertiesSold || 0}</h3>
+              <p>Properties Sold</p>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon warning">💰</div>
+            <div class="stat-info">
+              <h3>${formatPHP(agent.totalCommission || 0)}</h3>
+              <p>Total Commission</p>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h4>Contact Information</h4>
+          <p><strong>Email:</strong> ${agent.email}</p>
+          <p><strong>Phone:</strong> ${agent.phone || 'N/A'}</p>
+        </div>
+      `;
+      
+      openModal('agentModal');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>
