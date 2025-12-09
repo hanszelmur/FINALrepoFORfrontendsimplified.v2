@@ -518,10 +518,10 @@
     }
     
     // ===== DASHBOARD SECTION SCRIPTS =====
-    let currentUser = null;
     let myInquiries = [];
     
-    document.addEventListener('DOMContentLoaded', function() {
+    // Section initialization (moved to global handler)
+if (false) { // Disabled - handled by SPA init
       if (!checkAuth('agent')) return;
       
       currentUser = getCurrentUser();
@@ -735,11 +735,11 @@
     }
     
     // ===== INQUIRIES SECTION SCRIPTS =====
-    let currentUser = null;
     let myInquiries = [];
     let currentInquiry = null;
     
-    document.addEventListener('DOMContentLoaded', function() {
+    // Section initialization (moved to global handler)
+if (false) { // Disabled - handled by SPA init
       if (!checkAuth('agent')) return;
       
       currentUser = getCurrentUser();
@@ -969,10 +969,10 @@
     }
     
     // ===== CALENDAR SECTION SCRIPTS =====
-    let currentUser = null;
     let myInquiries = [];
     
-    document.addEventListener('DOMContentLoaded', function() {
+    // Section initialization (moved to global handler)
+if (false) { // Disabled - handled by SPA init
       if (!checkAuth('agent')) return;
       
       currentUser = getCurrentUser();
@@ -1151,9 +1151,9 @@
     }
     
     // ===== MY PROPERTIES SECTION SCRIPTS =====
-    let currentUser = null;
     
-    document.addEventListener('DOMContentLoaded', function() {
+    // Section initialization (moved to global handler)
+if (false) { // Disabled - handled by SPA init
       if (!checkAuth('agent')) return;
       
       currentUser = getCurrentUser();
