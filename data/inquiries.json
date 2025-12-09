@@ -1,0 +1,10 @@
+{
+  "_metadata": {
+    "description": "All customer inquiries in the system",
+    "section": "Inquiries",
+    "recordCount": 0,
+    "lastModified": "2025-12-09T05:30:00Z",
+    "note": "Complete record of all inquiries with status tracking"
+  },
+  "data": []
+}

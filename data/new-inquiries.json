@@ -1,0 +1,10 @@
+{
+  "_metadata": {
+    "description": "Only new inquiry submissions (unprocessed)",
+    "section": "Inquiries - New Submissions",
+    "recordCount": 0,
+    "lastModified": "2025-12-09T05:30:00Z",
+    "note": "Tracks new inquiries that need admin attention and agent assignment"
+  },
+  "data": []
+}
