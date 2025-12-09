@@ -746,11 +746,8 @@
     
     // ===== DASHBOARD SECTION SCRIPTS =====
     
-    // Section initialization (moved to global handler)
-if (false) { // Disabled - handled by SPA init
-      // Check authentication
-      // Auth check handled by global SPA init
-      
+          // Check authentication
+            
       currentUser = getCurrentUser();
       document.getElementById('userName').textContent = currentUser.name;
       
@@ -1028,9 +1025,7 @@ if (false) { // Disabled - handled by SPA init
     let allProperties = [];
     let currentInquiry = null;
     
-    // Section initialization (moved to global handler)
-if (false) { // Disabled - handled by SPA init
-      if (!checkAuth('admin')) return;
+          if (!checkAuth('admin')) return;
       
       initNavigation('admin');
       
@@ -1433,9 +1428,7 @@ if (false) { // Disabled - handled by SPA init
     let allProperties = [];
     let currentProperty = null;
     
-    // Section initialization (moved to global handler)
-if (false) { // Disabled - handled by SPA init
-      if (!checkAuth('admin')) return;
+          if (!checkAuth('admin')) return;
       
       initNavigation('admin');
       
@@ -1718,9 +1711,7 @@ if (false) { // Disabled - handled by SPA init
     // ===== AGENTS SECTION SCRIPTS =====
     let allAgents = [];
     
-    // Section initialization (moved to global handler)
-if (false) { // Disabled - handled by SPA init
-      if (!checkAuth('admin')) return;
+          if (!checkAuth('admin')) return;
       
       initNavigation('admin');
       
@@ -1846,9 +1837,7 @@ if (false) { // Disabled - handled by SPA init
     // ===== REPORTS SECTION SCRIPTS =====
     let startDate, endDate;
     
-    // Section initialization (moved to global handler)
-if (false) { // Disabled - handled by SPA init
-      if (!checkAuth('admin')) return;
+          if (!checkAuth('admin')) return;
       
       initNavigation('admin');
       
