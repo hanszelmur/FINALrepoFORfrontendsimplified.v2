@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* SPA Styles */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f8f9fa;
+    }
+    
+    .admin-sidebar {
+      width: 250px;
+      background-color: #1a202c;
+      color: white;
+      padding: 2rem 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    
+    .admin-content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 2rem;
+      width: calc(100% - 250px);
+      min-height: 100vh;
+    }
+    
+    .portal-section {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .portal-section.hidden {
+      display: none;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .admin-sidebar a {
+      display: block;
+      padding: 1rem 1.5rem;
+      color: #cbd5e0;
+      text-decoration: none;
+      transition: all 0.3s;
+      border-left: 3px solid transparent;
+    }
+    
+    .admin-sidebar a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-left-color: #60a5fa;
+    }
+    
+    .admin-sidebar a.active {
+      background-color: #3b82f6;
+      color: white;
+      border-left-color: #60a5fa;
+    }
+    
+    .admin-sidebar-brand {
+      padding: 0 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 1rem;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .admin-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      
+      .admin-content {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-brand">🏠 TES Property Admin</div>
+      <nav>
+        <a href="#dashboard" onclick="showSection('dashboard'); return false;" data-section="dashboard">📊 Dashboard</a>
+        <a href="#inquiries" onclick="showSection('inquiries'); return false;" data-section="inquiries">📋 Inquiries</a>
+        <a href="#properties" onclick="showSection('properties'); return false;" data-section="properties">🏠 Properties</a>
+        <a href="#agents" onclick="showSection('agents'); return false;" data-section="agents">👥 Agents</a>
+        <a href="#reports" onclick="showSection('reports'); return false;" data-section="reports">📈 Reports</a>
+        <a href="#" onclick="logout(); return false;" style="margin-top: 2rem; background-color: #dc2626; color: white;">🚪 Logout</a>
+      </nav>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="admin-content">
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="portal-section" data-section="dashboard">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="text-muted">Welcome back, <span id="userName">Admin</span></p>
+      </div>
+      <div>
+        <button onclick="location.reload()" class="btn btn-outline btn-sm">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <!-- Unassigned Inquiries Alert -->
+    <div id="unassignedAlert" class="alert alert-danger" style="display: none;">
+      <strong>⚠️ Urgent:</strong> <span id="unassignedCount">0</span> inquiries have been unassigned for more than 12 hours!
+      <a href="inquiries.html?filter=unassigned" class="btn btn-sm btn-danger" style="margin-left: 1rem;">View Now</a>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          📋
+        </div>
+        <div class="stat-info">
+          <h3 id="newInquiriesToday">0</h3>
+          <p>New Inquiries Today</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          ✅
+        </div>
+        <div class="stat-info">
+          <h3 id="activeInquiries">0</h3>
+          <p>Active Inquiries</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          🏠
+        </div>
+        <div class="stat-info">
+          <h3 id="activeProperties">0</h3>
+          <p>Active Properties</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          💰
+        </div>
+        <div class="stat-info">
+          <h3 id="salesThisMonth">₱0.00</h3>
+          <p>Sales This Month</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Action Items -->
+    <div class="grid grid-cols-2" style="margin-bottom: 2rem;">
+      <div class="card">
+        <div class="card-body">
+          <h3>🔴 Action Items</h3>
+          <div id="actionItems" style="margin-top: 1rem;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-body">
+          <h3>⏰ Reservations Expiring Soon</h3>
+          <div id="expiringReservations" style="margin-top: 1rem;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card">
+      <div class="card-body">
+        <h3>📊 Recent Activity</h3>
+        <div id="recentActivity" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- Inquiries Section -->
+      <section id="inquiries" class="portal-section hidden" data-section="inquiries">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Inquiry Management</h1>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="New">New</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Waiting - Property Reserved">Waiting - Property Reserved</option>
+            <option value="Viewing Scheduled">Viewing Scheduled</option>
+            <option value="Viewed - Interested">Viewed - Interested</option>
+            <option value="Viewed - Not Interested">Viewed - Not Interested</option>
+            <option value="Viewed - Undecided">Viewed - Undecided</option>
+            <option value="Deposit Paid">Deposit Paid</option>
+            <option value="Successful">Successful</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterAgent">Agent</label>
+          <select id="filterAgent">
+            <option value="">All Agents</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterProperty">Property</label>
+          <select id="filterProperty">
+            <option value="">All Properties</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterDateFrom">Date From</label>
+          <input type="date" id="filterDateFrom">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterDateTo">Date To</label>
+          <input type="date" id="filterDateTo">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inquiries Table -->
+    <div class="card">
+      <div class="card-body">
+        <div id="inquiriesTable">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Assign Inquiry Modal -->
+  <div id="assignModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Assign Inquiry</h2>
+        <button class="modal-close" onclick="closeModal('assignModal')">&times;</button>
+      </div>
+      <div id="assignModalBody">
+        <div class="form-group">
+          <label for="assignAgent">Select Agent</label>
+          <select id="assignAgent">
+            <option value="">Select an agent</option>
+          </select>
+        </div>
+        <div id="agentWarning" class="alert alert-warning" style="display: none; margin-top: 1rem;">
+          ⚠️ This agent has 20+ active inquiries. Consider assigning to another agent.
+        </div>
+        <div id="propertyWarning" class="alert alert-info" style="display: none; margin-top: 1rem;">
+          ℹ️ This property has other active inquiries.
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmAssign()" class="btn btn-primary">Assign</button>
+          <button onclick="closeModal('assignModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reassign Inquiry Modal -->
+  <div id="reassignModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Reassign Inquiry</h2>
+        <button class="modal-close" onclick="closeModal('reassignModal')">&times;</button>
+      </div>
+      <div id="reassignModalBody">
+        <div class="form-group">
+          <label for="reassignAgent">Select New Agent</label>
+          <select id="reassignAgent">
+            <option value="">Select an agent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reassignReason">Reason for Reassignment *</label>
+          <textarea id="reassignReason" rows="3" placeholder="Please provide a reason for reassignment..." required></textarea>
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmReassign()" class="btn btn-primary">Reassign</button>
+          <button onclick="closeModal('reassignModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- View Details Modal -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Inquiry Details</h2>
+        <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+      </div>
+      <div id="detailsModalBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- Properties Section -->
+      <section id="properties" class="portal-section hidden" data-section="properties">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <h1>Property Management</h1>
+      <button onclick="openAddPropertyModal()" class="btn btn-primary">+ Add Property</button>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="Available">Available</option>
+            <option value="Reserved">Reserved</option>
+            <option value="Pending">Pending</option>
+            <option value="Sold">Sold</option>
+            <option value="Withdrawn">Withdrawn</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterType">Property Type</label>
+          <select id="filterType">
+            <option value="">All Types</option>
+            <option value="House">House</option>
+            <option value="Condo">Condo</option>
+            <option value="Townhouse">Townhouse</option>
+            <option value="Lot">Lot</option>
+            <option value="Commercial">Commercial</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="viewType">View</label>
+          <select id="viewType" onchange="toggleView()">
+            <option value="grid">Grid View</option>
+            <option value="table">Table View</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Properties Grid -->
+    <div id="propertiesGrid" class="grid grid-cols-3" style="margin-top: 2rem;">
+      <div class="spinner"></div>
+    </div>
+    
+    <!-- Properties Table -->
+    <div id="propertiesTable" class="card" style="display: none; margin-top: 2rem;">
+      <div class="card-body">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add/Edit Property Modal -->
+  <div id="propertyModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="propertyModalTitle">Add Property</h2>
+        <button class="modal-close" onclick="closeModal('propertyModal')">&times;</button>
+      </div>
+      <form id="propertyForm">
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="propertyName">Property Name *</label>
+            <input type="text" id="propertyName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="propertyType">Property Type *</label>
+            <select id="propertyType" required>
+              <option value="House">House</option>
+              <option value="Condo">Condo</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Lot">Lot</option>
+              <option value="Commercial">Commercial</option>
+            </select>
+          </div>
+        </div>
+        
+        <h4 style="margin-top: 1.5rem;">Address</h4>
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="street">Street *</label>
+            <input type="text" id="street" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="barangay">Barangay *</label>
+            <input type="text" id="barangay" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input type="text" id="city" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="province">Province *</label>
+            <input type="text" id="province" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="zip">ZIP Code *</label>
+            <input type="text" id="zip" maxlength="4" required>
+          </div>
+        </div>
+        
+        <h4 style="margin-top: 1.5rem;">Details</h4>
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="price">Price (₱) *</label>
+            <input type="number" id="price" min="100000" max="999999999" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="floorArea">Floor Area (m²)</label>
+            <input type="number" id="floorArea" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="bedrooms">Bedrooms</label>
+            <input type="number" id="bedrooms" min="0" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="bathrooms">Bathrooms</label>
+            <input type="number" id="bathrooms" min="0" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="reservationFee">Reservation Fee (₱) *</label>
+            <input type="number" id="reservationFee" min="0" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="commission">Commission (₱) *</label>
+            <input type="number" id="commission" min="0" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea id="description" rows="4" required></textarea>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary">Save Property</button>
+          <button type="button" onclick="closeModal('propertyModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- Agents Section -->
+      <section id="agents" class="portal-section hidden" data-section="agents">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Agent Management</h1>
+    
+    <!-- Agents Table -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <div id="agentsTable">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Agent Details Modal -->
+  <div id="agentModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Agent Performance</h2>
+        <button class="modal-close" onclick="closeModal('agentModal')">&times;</button>
+      </div>
+      <div id="agentModalBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- Reports Section -->
+      <section id="reports" class="portal-section hidden" data-section="reports">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>Reports & Analytics</h1>
+    
+    <!-- Date Range Filter -->
+    <div class="filters" style="margin-top: 2rem;">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="dateRange">Date Range</label>
+          <select id="dateRange" onchange="updateDateRange()">
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        
+        <div class="form-group" id="customDateFrom" style="margin-bottom: 0; display: none;">
+          <label for="startDate">Start Date</label>
+          <input type="date" id="startDate">
+        </div>
+        
+        <div class="form-group" id="customDateTo" style="margin-bottom: 0; display: none;">
+          <label for="endDate">End Date</label>
+          <input type="date" id="endDate">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>&nbsp;</label>
+          <button onclick="generateReports()" class="btn btn-primary">Generate Reports</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Export Options -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>Export Reports</h3>
+        <div class="grid grid-cols-4" style="margin-top: 1.5rem; gap: 1rem;">
+          <button onclick="exportReport('inquiries')" class="btn btn-outline">
+            📋 All Inquiries
+          </button>
+          <button onclick="exportReport('activeInquiries')" class="btn btn-outline">
+            ✅ Active Inquiries
+          </button>
+          <button onclick="exportReport('soldProperties')" class="btn btn-outline">
+            🏠 Sold Properties
+          </button>
+          <button onclick="exportReport('salesCommissions')" class="btn btn-outline">
+            💰 Sales & Commissions
+          </button>
+          <button onclick="exportReport('agentPerformance')" class="btn btn-outline">
+            👥 Agent Performance
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Statistics Summary -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>Statistics Summary</h3>
+        <div id="statisticsSummary" style="margin-top: 1.5rem;">
+          <p class="text-muted">Select a date range and click "Generate Reports" to view statistics</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <!-- Include Firebase and utility scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  
+  <script>
+    // ===== GLOBAL STATE AND SPA LOGIC =====
+    let currentUser = null;
+    let currentSection = 'dashboard';
+    
+    // SPA Navigation Logic
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.portal-section').forEach(section => {
+        section.classList.add('hidden');
+      });
+      
+      // Update active nav link
+      document.querySelectorAll('.admin-sidebar a').forEach(link => {
+        link.classList.remove('active');
+      });
+      const activeLink = document.querySelector(`.admin-sidebar a[data-section="${sectionId}"]`);
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+      
+      // Update URL hash (no page reload!)
+      window.location.hash = sectionId;
+      
+      // Show selected section
+      const targetSection = document.getElementById(sectionId);
+      if (targetSection) {
+        targetSection.classList.remove('hidden');
+      }
+      
+      currentSection = sectionId;
+      
+      // Load section-specific data
+      loadSectionData(sectionId);
+    }
+    
+    function loadSectionData(sectionId) {
+      console.log('Loading section:', sectionId);
+      switch(sectionId) {
+        case 'dashboard':
+          if (typeof loadDashboardData === 'function') loadDashboardData();
+          break;
+        case 'inquiries':
+          if (typeof loadInquiries === 'function') loadInquiries();
+          if (typeof loadAgentsForInquiries === 'function') loadAgentsForInquiries();
+          if (typeof loadPropertiesForInquiries === 'function') loadPropertiesForInquiries();
+          break;
+        case 'properties':
+          if (typeof loadProperties === 'function') loadProperties();
+          break;
+        case 'agents':
+          if (typeof loadAgents === 'function') loadAgents();
+          break;
+        case 'reports':
+          // Reports load on demand
+          break;
+      }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Admin SPA initializing...');
+      
+      // Check authentication
+      if (!checkAuth || !checkAuth('admin')) {
+        console.log('Auth failed, redirecting to login');
+        window.location.href = '../shared/login.html';
+        return;
+      }
+      
+      currentUser = getCurrentUser();
+      console.log('Current user:', currentUser);
+      
+      // Update user name if element exists
+      const userNameEl = document.getElementById('userName');
+      if (userNameEl && currentUser) {
+        userNameEl.textContent = currentUser.name;
+      }
+      
+      // Initialize navigation
+      if (typeof initNavigation === 'function') {
+        initNavigation('admin');
+      }
+      
+      // Initialize Firebase
+      if (!initializeFirebase || !initializeFirebase()) {
+        showAlert('Unable to connect to database', 'danger');
+        return;
+      }
+      
+      // Load initial section based on hash or default to dashboard
+      const hash = window.location.hash.substring(1) || 'dashboard';
+      console.log('Initial section:', hash);
+      showSection(hash);
+    });
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.substring(1) || 'dashboard';
+      console.log('Hash changed to:', hash);
+      showSection(hash);
+    });
+    
+    function logout() {
+      if (typeof clearCurrentUser === 'function') {
+        clearCurrentUser();
+      }
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== DASHBOARD SECTION SCRIPTS =====
+    
+          // Check authentication
+            
+      currentUser = getCurrentUser();
+      document.getElementById('userName').textContent = currentUser.name;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadDashboardData();
+        setupRealTimeListeners();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadDashboardData() {
+      loadStatistics();
+      loadActionItems();
+      loadExpiringReservations();
+      loadRecentActivity();
+    }
+    
+    function loadStatistics() {
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      
+      // Load inquiries
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        const inquiries = Object.values(data);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // New inquiries today
+        const newToday = inquiries.filter(i => {
+          const createdDate = new Date(i.createdAt);
+          createdDate.setHours(0, 0, 0, 0);
+          return createdDate.getTime() === today.getTime();
+        }).length;
+        
+        // Active inquiries
+        const activeStatuses = ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'];
+        const active = inquiries.filter(i => activeStatuses.includes(i.status)).length;
+        
+        // Check for unassigned inquiries over 12 hours
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+        const unassignedOld = inquiries.filter(i => 
+          i.status === 'New' && 
+          !i.assignedAgentId && 
+          new Date(i.createdAt) < twelveHoursAgo
+        ).length;
+        
+        document.getElementById('newInquiriesToday').textContent = newToday;
+        document.getElementById('activeInquiries').textContent = active;
+        
+        if (unassignedOld > 0) {
+          document.getElementById('unassignedAlert').style.display = 'block';
+          document.getElementById('unassignedCount').textContent = unassignedOld;
+        } else {
+          document.getElementById('unassignedAlert').style.display = 'none';
+        }
+      });
+      
+      // Load properties
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        const properties = Object.values(data);
+        const active = properties.filter(p => 
+          ['Available', 'Reserved', 'Pending'].includes(p.status)
+        ).length;
+        
+        // Sales this month
+        const thisMonth = new Date();
+        thisMonth.setDate(1);
+        thisMonth.setHours(0, 0, 0, 0);
+        
+        const salesThisMonth = properties
+          .filter(p => p.status === 'Sold' && p.soldDate && new Date(p.soldDate) >= thisMonth)
+          .reduce((sum, p) => sum + (p.finalSalePrice || p.price), 0);
+        
+        document.getElementById('activeProperties').textContent = active;
+        document.getElementById('salesThisMonth').textContent = formatPHP(salesThisMonth);
+      });
+    }
+    
+    function loadActionItems() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('actionItems');
+        
+        if (!data) {
+          container.innerHTML = '<p class="text-muted">No pending actions</p>';
+          return;
+        }
+        
+        const inquiries = Object.values(data);
+        
+        // Unassigned inquiries
+        const unassigned = inquiries.filter(i => i.status === 'New' && !i.assignedAgentId);
+        
+        // Inquiries pending for more than 24 hours
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const pending = inquiries.filter(i => 
+          i.status === 'Assigned' && 
+          new Date(i.createdAt) < oneDayAgo
+        );
+        
+        const items = [];
+        
+        if (unassigned.length > 0) {
+          items.push(`
+            <div style="padding: 0.75rem; background-color: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+              <strong>${unassigned.length}</strong> unassigned inquiries
+              <a href="inquiries.html?filter=new" class="btn btn-sm btn-primary" style="float: right;">Assign</a>
+            </div>
+          `);
+        }
+        
+        if (pending.length > 0) {
+          items.push(`
+            <div style="padding: 0.75rem; background-color: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+              <strong>${pending.length}</strong> inquiries pending for 24+ hours
+              <a href="inquiries.html?filter=assigned" class="btn btn-sm btn-warning" style="float: right;">Review</a>
+            </div>
+          `);
+        }
+        
+        if (items.length === 0) {
+          container.innerHTML = '<p class="text-muted">✅ All caught up! No pending actions.</p>';
+        } else {
+          container.innerHTML = items.join('');
+        }
+      });
+    }
+    
+    function loadExpiringReservations() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('expiringReservations');
+        
+        if (!data) {
+          container.innerHTML = '<p class="text-muted">No reservations expiring soon</p>';
+          return;
+        }
+        
+        const properties = Object.values(data);
+        const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+        
+        const expiring = properties.filter(p => 
+          p.status === 'Reserved' && 
+          p.reservationExpiry && 
+          new Date(p.reservationExpiry) <= twoDaysFromNow &&
+          new Date(p.reservationExpiry) > new Date()
+        );
+        
+        if (expiring.length === 0) {
+          container.innerHTML = '<p class="text-muted">No reservations expiring in the next 2 days</p>';
+          return;
+        }
+        
+        container.innerHTML = expiring.map(p => `
+          <div style="padding: 0.75rem; background-color: var(--gray-100); border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+            <strong>${p.name}</strong>
+            <span class="badge badge-warning" style="margin-left: 0.5rem;">
+              Expires ${formatDate(p.reservationExpiry)}
+            </span>
+            <a href="properties.html?id=${p.id}" class="btn btn-sm btn-outline" style="float: right;">View</a>
+          </div>
+        `).join('');
+      });
+    }
+    
+    function loadRecentActivity() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('recentActivity');
+        
+        if (!data) {
+          container.innerHTML = '<p class="text-muted">No recent activity</p>';
+          return;
+        }
+        
+        const inquiries = Object.values(data);
+        
+        // Get all status changes
+        const activities = [];
+        inquiries.forEach(inquiry => {
+          if (inquiry.statusHistory) {
+            inquiry.statusHistory.forEach(history => {
+              activities.push({
+                inquiry: inquiry,
+                status: history.status,
+                changedBy: history.changedBy,
+                timestamp: history.timestamp
+              });
+            });
+          }
+        });
+        
+        // Sort by timestamp (most recent first)
+        activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        // Take last 10
+        const recent = activities.slice(0, 10);
+        
+        if (recent.length === 0) {
+          container.innerHTML = '<p class="text-muted">No recent activity</p>';
+          return;
+        }
+        
+        container.innerHTML = `
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Inquiry</th>
+                  <th>Status</th>
+                  <th>Changed By</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recent.map(activity => `
+                  <tr>
+                    <td>${getTimeAgo(activity.timestamp)}</td>
+                    <td>
+                      <strong>${activity.inquiry.propertyName}</strong><br>
+                      <small class="text-muted">${activity.inquiry.customerName}</small>
+                    </td>
+                    <td><span class="badge ${getStatusBadgeClass(activity.status)}">${activity.status}</span></td>
+                    <td>${activity.changedBy}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+    }
+    
+    function setupRealTimeListeners() {
+      // Listen for new inquiries
+      const inquiriesRef = getInquiriesRef();
+      let isFirstLoad = true;
+      
+      inquiriesRef.on('child_added', (snapshot) => {
+        if (isFirstLoad) return; // Skip initial load
+        
+        const inquiry = snapshot.val();
+        showAlert(`New inquiry from ${inquiry.customerName} for ${inquiry.propertyName}`, 'info');
+      });
+      
+      // Mark first load complete after a short delay
+      setTimeout(() => {
+        isFirstLoad = false;
+      }, 1000);
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== INQUIRIES SECTION SCRIPTS =====
+    let allInquiries = [];
+    let allAgents = [];
+    let allProperties = [];
+    let currentInquiry = null;
+    
+          if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadAgents();
+        loadProperties();
+        loadInquiries();
+        setupFilters();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadAgents() {
+      const usersRef = getUsersRef();
+      
+      usersRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        allAgents = Object.values(data).filter(u => u.role === 'agent');
+        
+        // Populate agent filters and dropdowns
+        const filterAgent = document.getElementById('filterAgent');
+        const assignAgent = document.getElementById('assignAgent');
+        const reassignAgent = document.getElementById('reassignAgent');
+        
+        filterAgent.innerHTML = '<option value="">All Agents</option>';
+        assignAgent.innerHTML = '<option value="">Select an agent</option>';
+        reassignAgent.innerHTML = '<option value="">Select an agent</option>';
+        
+        allAgents.forEach(agent => {
+          filterAgent.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
+          assignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
+          reassignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
+        });
+      });
+    }
+    
+    function loadProperties() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        allProperties = Object.values(data);
+        
+        const filterProperty = document.getElementById('filterProperty');
+        filterProperty.innerHTML = '<option value="">All Properties</option>';
+        
+        allProperties.forEach(property => {
+          filterProperty.innerHTML += `<option value="${property.id}">${property.name}</option>`;
+        });
+      });
+    }
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            allInquiries.push({ key: key, ...data[key] });
+          });
+          
+          // Sort by date (newest first)
+          allInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        displayInquiries(allInquiries);
+      });
+    }
+    
+    function displayInquiries(inquiries) {
+      const container = document.getElementById('inquiriesTable');
+      
+      if (inquiries.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 2rem;">No inquiries found</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Property</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Agent</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inquiries.map(inquiry => `
+                <tr>
+                  <td>#${inquiry.id}</td>
+                  <td><strong>${inquiry.propertyName}</strong></td>
+                  <td>
+                    ${inquiry.customerName}<br>
+                    <small class="text-muted">${inquiry.customerEmail}</small>
+                  </td>
+                  <td>${inquiry.customerPhone}</td>
+                  <td><span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></td>
+                  <td>${inquiry.assignedAgentName || '<span class="text-muted">Unassigned</span>'}</td>
+                  <td>${formatDate(inquiry.createdAt)}</td>
+                  <td>
+                    <button onclick="viewInquiry('${inquiry.key}')" class="btn btn-sm btn-outline" title="View Details">👁️</button>
+                    ${!inquiry.assignedAgentId ? 
+                      `<button onclick="openAssignModal('${inquiry.key}')" class="btn btn-sm btn-primary" title="Assign">Assign</button>` :
+                      (inquiry.status !== 'Deposit Paid' && inquiry.status !== 'Successful' ?
+                        `<button onclick="openReassignModal('${inquiry.key}')" class="btn btn-sm btn-warning" title="Reassign">Reassign</button>` :
+                        '')
+                    }
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function setupFilters() {
+      const filters = ['filterStatus', 'filterAgent', 'filterProperty', 'filterDateFrom', 'filterDateTo'];
+      filters.forEach(filterId => {
+        document.getElementById(filterId).addEventListener('change', applyFilters);
+      });
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      const agentId = document.getElementById('filterAgent').value;
+      const propertyId = document.getElementById('filterProperty').value;
+      const dateFrom = document.getElementById('filterDateFrom').value;
+      const dateTo = document.getElementById('filterDateTo').value;
+      
+      let filtered = allInquiries;
+      
+      if (status) {
+        filtered = filtered.filter(i => i.status === status);
+      }
+      
+      if (agentId) {
+        filtered = filtered.filter(i => i.assignedAgentId == agentId);
+      }
+      
+      if (propertyId) {
+        filtered = filtered.filter(i => i.propertyId == propertyId);
+      }
+      
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        filtered = filtered.filter(i => new Date(i.createdAt) >= fromDate);
+      }
+      
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(i => new Date(i.createdAt) <= toDate);
+      }
+      
+      displayInquiries(filtered);
+    }
+    
+    function openAssignModal(inquiryKey) {
+      currentInquiry = allInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      // Check for property warnings
+      const propertyInquiries = allInquiries.filter(i => 
+        i.propertyId === currentInquiry.propertyId && 
+        i.key !== inquiryKey &&
+        ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+      );
+      
+      if (propertyInquiries.length > 0) {
+        document.getElementById('propertyWarning').style.display = 'block';
+        document.getElementById('propertyWarning').innerHTML = 
+          `ℹ️ This property has ${propertyInquiries.length} other active inquiry/inquiries.`;
+      } else {
+        document.getElementById('propertyWarning').style.display = 'none';
+      }
+      
+      document.getElementById('assignAgent').value = '';
+      document.getElementById('agentWarning').style.display = 'none';
+      
+      document.getElementById('assignAgent').addEventListener('change', function() {
+        const agentId = parseInt(this.value);
+        const agent = allAgents.find(a => a.id === agentId);
+        
+        if (agent && agent.activeInquiries >= 20) {
+          document.getElementById('agentWarning').style.display = 'block';
+        } else {
+          document.getElementById('agentWarning').style.display = 'none';
+        }
+      });
+      
+      openModal('assignModal');
+    }
+    
+    function confirmAssign() {
+      const agentId = parseInt(document.getElementById('assignAgent').value);
+      
+      if (!agentId) {
+        showAlert('Please select an agent', 'danger');
+        return;
+      }
+      
+      const agent = allAgents.find(a => a.id === agentId);
+      if (!agent) {
+        showAlert('Agent not found', 'danger');
+        return;
+      }
+      
+      // Update inquiry
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      const timestamp = new Date().toISOString();
+      
+      inquiryRef.update({
+        status: 'Assigned',
+        assignedAgentId: agentId,
+        assignedAgentName: agent.name,
+        statusHistory: [
+          ...currentInquiry.statusHistory,
+          {
+            status: 'Assigned',
+            changedBy: 'admin',
+            timestamp: timestamp
+          }
+        ]
+      }).then(() => {
+        // Update agent's active inquiry count
+        const userRef = database.ref(`users/user_${agentId}`);
+        userRef.update({
+          activeInquiries: (agent.activeInquiries || 0) + 1
+        });
+        
+        showAlert('Inquiry assigned successfully', 'success');
+        closeModal('assignModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error assigning inquiry:', error);
+        showAlert('Failed to assign inquiry', 'danger');
+      });
+    }
+    
+    function openReassignModal(inquiryKey) {
+      currentInquiry = allInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      // Check if reassignment is allowed
+      if (currentInquiry.status === 'Deposit Paid' || currentInquiry.status === 'Successful') {
+        showAlert('Cannot reassign inquiries with status "Deposit Paid" or "Successful"', 'danger');
+        return;
+      }
+      
+      document.getElementById('reassignAgent').value = '';
+      document.getElementById('reassignReason').value = '';
+      
+      openModal('reassignModal');
+    }
+    
+    function confirmReassign() {
+      const newAgentId = parseInt(document.getElementById('reassignAgent').value);
+      const reason = document.getElementById('reassignReason').value.trim();
+      
+      if (!newAgentId) {
+        showAlert('Please select an agent', 'danger');
+        return;
+      }
+      
+      if (!reason) {
+        showAlert('Please provide a reason for reassignment', 'danger');
+        return;
+      }
+      
+      const newAgent = allAgents.find(a => a.id === newAgentId);
+      const oldAgent = allAgents.find(a => a.id === currentInquiry.assignedAgentId);
+      
+      if (!newAgent) {
+        showAlert('Agent not found', 'danger');
+        return;
+      }
+      
+      // Update inquiry
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      const timestamp = new Date().toISOString();
+      
+      // Sanitize reason text
+      const sanitizedReason = reason.replace(/[<>]/g, '');
+      
+      inquiryRef.update({
+        assignedAgentId: newAgentId,
+        assignedAgentName: newAgent.name,
+        notes: `${currentInquiry.notes}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${sanitizedReason}`,
+        statusHistory: [
+          ...currentInquiry.statusHistory,
+          {
+            status: 'Reassigned',
+            changedBy: 'admin',
+            timestamp: timestamp,
+            note: `Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${reason}`
+          }
+        ]
+      }).then(() => {
+        // Update agent counts
+        if (oldAgent) {
+          database.ref(`users/user_${oldAgent.id}`).update({
+            activeInquiries: Math.max(0, (oldAgent.activeInquiries || 0) - 1)
+          });
+        }
+        
+        database.ref(`users/user_${newAgentId}`).update({
+          activeInquiries: (newAgent.activeInquiries || 0) + 1
+        });
+        
+        showAlert('Inquiry reassigned successfully', 'success');
+        closeModal('reassignModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error reassigning inquiry:', error);
+        showAlert('Failed to reassign inquiry', 'danger');
+      });
+    }
+    
+    function viewInquiry(inquiryKey) {
+      const inquiry = allInquiries.find(i => i.key === inquiryKey);
+      if (!inquiry) return;
+      
+      const modalBody = document.getElementById('detailsModalBody');
+      
+      modalBody.innerHTML = `
+        <div class="grid grid-cols-2" style="gap: 1.5rem;">
+          <div>
+            <h4>Customer Information</h4>
+            <p><strong>Name:</strong> ${inquiry.customerName}</p>
+            <p><strong>Email:</strong> ${inquiry.customerEmail}</p>
+            <p><strong>Phone:</strong> ${inquiry.customerPhone}</p>
+            <p><strong>Preferred Contact:</strong> ${inquiry.preferredContact}</p>
+            <p><strong>Number of Guests:</strong> ${inquiry.numberOfGuests}</p>
+          </div>
+          
+          <div>
+            <h4>Inquiry Details</h4>
+            <p><strong>Property:</strong> ${inquiry.propertyName}</p>
+            <p><strong>Status:</strong> <span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></p>
+            <p><strong>Assigned Agent:</strong> ${inquiry.assignedAgentName || 'Unassigned'}</p>
+            <p><strong>Created:</strong> ${formatDateTime(inquiry.createdAt)}</p>
+            <p><strong>No-Show Count:</strong> ${inquiry.noShowCount || 0}</p>
+          </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+          <h4>Message</h4>
+          <p style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius);">
+            ${inquiry.message}
+          </p>
+        </div>
+        
+        ${inquiry.notes ? `
+          <div style="margin-top: 1.5rem;">
+            <h4>Notes</h4>
+            <p style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); white-space: pre-wrap;">
+              ${inquiry.notes}
+            </p>
+          </div>
+        ` : ''}
+        
+        <div style="margin-top: 1.5rem;">
+          <h4>Status History</h4>
+          <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius);">
+            ${inquiry.statusHistory.map(h => `
+              <div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-300);">
+                <strong>${h.status}</strong> - ${formatDateTime(h.timestamp)}<br>
+                <small class="text-muted">by ${h.changedBy}${h.note ? ' - ' + h.note : ''}</small>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      
+      openModal('detailsModal');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== PROPERTIES SECTION SCRIPTS =====
+    let allProperties = [];
+    let currentProperty = null;
+    
+          if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadProperties();
+        setupFilters();
+        setupForm();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadProperties() {
+      const propertiesRef = getPropertiesRef();
+      
+      propertiesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allProperties = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            allProperties.push({ key: key, ...data[key] });
+          });
+          
+          allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        displayProperties(allProperties);
+      });
+    }
+    
+    function displayProperties(properties) {
+      const grid = document.getElementById('propertiesGrid');
+      const table = document.getElementById('propertiesTable');
+      const viewType = document.getElementById('viewType').value;
+      
+      if (properties.length === 0) {
+        grid.innerHTML = '<p class="text-muted" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">No properties found</p>';
+        return;
+      }
+      
+      if (viewType === 'grid') {
+        grid.innerHTML = properties.map(property => `
+          <div class="card">
+            <img src="${property.photos && property.photos[0] ? property.photos[0].url : 'https://via.placeholder.com/400x300?text=Property'}" 
+                 alt="${property.name}" 
+                 class="card-img">
+            <div class="card-body">
+              <div class="d-flex justify-between align-center" style="margin-bottom: 0.5rem;">
+                <h3 class="card-title" style="margin-bottom: 0;">${property.name}</h3>
+                <span class="badge ${getStatusBadgeClass(property.status)}">${property.status}</span>
+              </div>
+              
+              <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                ${formatAddress(property.address)}
+              </p>
+              
+              <p style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem;">
+                ${formatPHP(property.price)}
+              </p>
+              
+              <p class="card-text" style="margin-bottom: 1rem;">
+                ${property.propertyType} • ${property.floorArea}m²
+              </p>
+              
+              <div class="d-flex gap-1">
+                <button onclick="editProperty('${property.key}')" class="btn btn-sm btn-outline" style="flex: 1;">Edit</button>
+                <button onclick="changeStatus('${property.key}')" class="btn btn-sm btn-primary" style="flex: 1;">Status</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        table.querySelector('.card-body').innerHTML = `
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${properties.map(property => `
+                  <tr>
+                    <td><strong>${property.name}</strong></td>
+                    <td>${property.propertyType}</td>
+                    <td>${property.address.city}, ${property.address.province}</td>
+                    <td>${formatPHP(property.price)}</td>
+                    <td><span class="badge ${getStatusBadgeClass(property.status)}">${property.status}</span></td>
+                    <td>
+                      <button onclick="editProperty('${property.key}')" class="btn btn-sm btn-outline">Edit</button>
+                      <button onclick="changeStatus('${property.key}')" class="btn btn-sm btn-primary">Status</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+    
+    function toggleView() {
+      const viewType = document.getElementById('viewType').value;
+      const grid = document.getElementById('propertiesGrid');
+      const table = document.getElementById('propertiesTable');
+      
+      if (viewType === 'grid') {
+        grid.style.display = 'grid';
+        table.style.display = 'none';
+      } else {
+        grid.style.display = 'none';
+        table.style.display = 'block';
+      }
+      
+      displayProperties(allProperties);
+    }
+    
+    function setupFilters() {
+      document.getElementById('filterStatus').addEventListener('change', applyFilters);
+      document.getElementById('filterType').addEventListener('change', applyFilters);
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      const type = document.getElementById('filterType').value;
+      
+      let filtered = allProperties;
+      
+      if (status) {
+        filtered = filtered.filter(p => p.status === status);
+      }
+      
+      if (type) {
+        filtered = filtered.filter(p => p.propertyType === type);
+      }
+      
+      displayProperties(filtered);
+    }
+    
+    function openAddPropertyModal() {
+      currentProperty = null;
+      document.getElementById('propertyModalTitle').textContent = 'Add Property';
+      document.getElementById('propertyForm').reset();
+      openModal('propertyModal');
+    }
+    
+    function editProperty(propertyKey) {
+      currentProperty = allProperties.find(p => p.key === propertyKey);
+      if (!currentProperty) return;
+      
+      document.getElementById('propertyModalTitle').textContent = 'Edit Property';
+      document.getElementById('propertyName').value = currentProperty.name;
+      document.getElementById('propertyType').value = currentProperty.propertyType;
+      document.getElementById('street').value = currentProperty.address.street;
+      document.getElementById('barangay').value = currentProperty.address.barangay;
+      document.getElementById('city').value = currentProperty.address.city;
+      document.getElementById('province').value = currentProperty.address.province;
+      document.getElementById('zip').value = currentProperty.address.zip;
+      document.getElementById('price').value = currentProperty.price;
+      document.getElementById('floorArea').value = currentProperty.floorArea || '';
+      document.getElementById('bedrooms').value = currentProperty.bedrooms || 0;
+      document.getElementById('bathrooms').value = currentProperty.bathrooms || 0;
+      document.getElementById('reservationFee').value = currentProperty.reservationFee;
+      document.getElementById('commission').value = currentProperty.commission;
+      document.getElementById('description').value = currentProperty.description;
+      
+      openModal('propertyModal');
+    }
+    
+    function setupForm() {
+      document.getElementById('propertyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+          name: document.getElementById('propertyName').value.trim(),
+          propertyType: document.getElementById('propertyType').value,
+          address: {
+            street: document.getElementById('street').value.trim(),
+            barangay: document.getElementById('barangay').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            province: document.getElementById('province').value.trim(),
+            zip: document.getElementById('zip').value.trim()
+          },
+          price: parseFloat(document.getElementById('price').value),
+          floorArea: parseFloat(document.getElementById('floorArea').value) || 0,
+          bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
+          bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
+          reservationFee: parseFloat(document.getElementById('reservationFee').value),
+          commission: parseFloat(document.getElementById('commission').value),
+          description: document.getElementById('description').value.trim()
+        };
+        
+        if (currentProperty) {
+          // Update existing property
+          const propertyRef = database.ref(`properties/${currentProperty.key}`);
+          propertyRef.update(formData)
+            .then(() => {
+              showAlert('Property updated successfully', 'success');
+              closeModal('propertyModal');
+              currentProperty = null;
+            })
+            .catch(error => {
+              console.error('Error updating property:', error);
+              showAlert('Failed to update property', 'danger');
+            });
+        } else {
+          // Add new property
+          const propertiesRef = getPropertiesRef();
+          const newPropertyKey = propertiesRef.push().key;
+          
+          const property = {
+            id: Date.now(),
+            ...formData,
+            status: 'Available',
+            photos: [
+              { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
+            ],
+            createdAt: new Date().toISOString()
+          };
+          
+          propertiesRef.child(newPropertyKey).set(property)
+            .then(() => {
+              showAlert('Property added successfully', 'success');
+              closeModal('propertyModal');
+            })
+            .catch(error => {
+              console.error('Error adding property:', error);
+              showAlert('Failed to add property', 'danger');
+            });
+        }
+      });
+    }
+    
+    function changeStatus(propertyKey) {
+      const property = allProperties.find(p => p.key === propertyKey);
+      if (!property) return;
+      
+      const newStatus = prompt(`Current status: ${property.status}\n\nEnter new status:\n- Available\n- Reserved\n- Pending\n- Sold\n- Withdrawn`, property.status);
+      
+      if (!newStatus || newStatus === property.status) return;
+      
+      const validStatuses = ['Available', 'Reserved', 'Pending', 'Sold', 'Withdrawn'];
+      if (!validStatuses.includes(newStatus)) {
+        showAlert('Invalid status', 'danger');
+        return;
+      }
+      
+      const propertyRef = database.ref(`properties/${propertyKey}`);
+      const updates = { status: newStatus };
+      
+      if (newStatus === 'Sold') {
+        const finalPrice = prompt('Enter final sale price:', property.price);
+        if (finalPrice) {
+          updates.finalSalePrice = parseFloat(finalPrice);
+          updates.soldDate = new Date().toISOString();
+        }
+      }
+      
+      propertyRef.update(updates)
+        .then(() => {
+          showAlert('Property status updated successfully', 'success');
+        })
+        .catch(error => {
+          console.error('Error updating status:', error);
+          showAlert('Failed to update status', 'danger');
+        });
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== AGENTS SECTION SCRIPTS =====
+    let allAgents = [];
+    
+          if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        loadAgents();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadAgents() {
+      const usersRef = getUsersRef();
+      
+      usersRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allAgents = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const user = data[key];
+            if (user.role === 'agent') {
+              allAgents.push({ key: key, ...user });
+            }
+          });
+          
+          allAgents.sort((a, b) => (b.totalCommission || 0) - (a.totalCommission || 0));
+        }
+        
+        displayAgents();
+      });
+    }
+    
+    function displayAgents() {
+      const container = document.getElementById('agentsTable');
+      
+      if (allAgents.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 2rem;">No agents found</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Active Inquiries</th>
+                <th>Properties Sold</th>
+                <th>Total Commission</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allAgents.map(agent => `
+                <tr>
+                  <td><strong>${agent.name}</strong></td>
+                  <td>${agent.email}</td>
+                  <td>${agent.phone || 'N/A'}</td>
+                  <td>${agent.activeInquiries || 0}</td>
+                  <td>${agent.propertiesSold || 0}</td>
+                  <td>${formatPHP(agent.totalCommission || 0)}</td>
+                  <td>
+                    <button onclick="viewAgentDetails('${agent.key}')" class="btn btn-sm btn-primary">View Details</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function viewAgentDetails(agentKey) {
+      const agent = allAgents.find(a => a.key === agentKey);
+      if (!agent) return;
+      
+      const modalBody = document.getElementById('agentModalBody');
+      
+      modalBody.innerHTML = `
+        <div class="stats-grid" style="margin-bottom: 2rem;">
+          <div class="stat-card">
+            <div class="stat-icon primary">📋</div>
+            <div class="stat-info">
+              <h3>${agent.activeInquiries || 0}</h3>
+              <p>Active Inquiries</p>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon success">🏠</div>
+            <div class="stat-info">
+              <h3>${agent.propertiesSold || 0}</h3>
+              <p>Properties Sold</p>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon warning">💰</div>
+            <div class="stat-info">
+              <h3>${formatPHP(agent.totalCommission || 0)}</h3>
+              <p>Total Commission</p>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h4>Contact Information</h4>
+          <p><strong>Email:</strong> ${agent.email}</p>
+          <p><strong>Phone:</strong> ${agent.phone || 'N/A'}</p>
+        </div>
+      `;
+      
+      openModal('agentModal');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== REPORTS SECTION SCRIPTS =====
+    let startDate, endDate;
+    
+          if (!checkAuth('admin')) return;
+      
+      initNavigation('admin');
+      
+      if (initializeFirebase()) {
+        updateDateRange();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function updateDateRange() {
+      const range = document.getElementById('dateRange').value;
+      const customFrom = document.getElementById('customDateFrom');
+      const customTo = document.getElementById('customDateTo');
+      
+      if (range === 'custom') {
+        customFrom.style.display = 'block';
+        customTo.style.display = 'block';
+        return;
+      } else {
+        customFrom.style.display = 'none';
+        customTo.style.display = 'none';
+      }
+      
+      const now = new Date();
+      endDate = new Date(now);
+      
+      if (range === '7' || range === '30' || range === '90') {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - parseInt(range));
+      } else if (range === 'thisMonth') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else if (range === 'lastMonth') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+      }
+    }
+    
+    function generateReports() {
+      const range = document.getElementById('dateRange').value;
+      
+      if (range === 'custom') {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        
+        if (!start || !end) {
+          showAlert('Please select both start and end dates', 'danger');
+          return;
+        }
+        
+        startDate = new Date(start);
+        endDate = new Date(end);
+      }
+      
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      
+      Promise.all([
+        inquiriesRef.once('value'),
+        propertiesRef.once('value')
+      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
+        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
+        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+        
+        const filtered = inquiries.filter(i => {
+          const date = new Date(i.createdAt);
+          return date >= startDate && date <= endDate;
+        });
+        
+        const soldProperties = properties.filter(p => {
+          return p.status === 'Sold' && p.soldDate && 
+                 new Date(p.soldDate) >= startDate && 
+                 new Date(p.soldDate) <= endDate;
+        });
+        
+        const totalSales = soldProperties.reduce((sum, p) => sum + (p.finalSalePrice || p.price), 0);
+        const totalCommissions = soldProperties.reduce((sum, p) => sum + (p.commission || 0), 0);
+        
+        const active = filtered.filter(i => 
+          ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+        ).length;
+        
+        document.getElementById('statisticsSummary').innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon primary">📋</div>
+              <div class="stat-info">
+                <h3>${filtered.length}</h3>
+                <p>Total Inquiries</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon success">✅</div>
+              <div class="stat-info">
+                <h3>${active}</h3>
+                <p>Active Inquiries</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon warning">🏠</div>
+              <div class="stat-info">
+                <h3>${soldProperties.length}</h3>
+                <p>Properties Sold</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon success">💰</div>
+              <div class="stat-info">
+                <h3>${formatPHP(totalSales)}</h3>
+                <p>Total Sales</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon warning">💵</div>
+              <div class="stat-info">
+                <h3>${formatPHP(totalCommissions)}</h3>
+                <p>Total Commissions</p>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        showAlert('Reports generated successfully', 'success');
+      });
+    }
+    
+    function exportReport(type) {
+      updateDateRange();
+      
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      const usersRef = getUsersRef();
+      
+      Promise.all([
+        inquiriesRef.once('value'),
+        propertiesRef.once('value'),
+        usersRef.once('value')
+      ]).then(([inquiriesSnapshot, propertiesSnapshot, usersSnapshot]) => {
+        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
+        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+        const users = usersSnapshot.val() ? Object.values(usersSnapshot.val()) : [];
+        
+        let data = [];
+        let filename = '';
+        
+        switch(type) {
+          case 'inquiries':
+            data = inquiries.map(i => ({
+              'ID': i.id,
+              'Property': i.propertyName,
+              'Customer': i.customerName,
+              'Email': i.customerEmail,
+              'Phone': i.customerPhone,
+              'Status': i.status,
+              'Agent': i.assignedAgentName || 'Unassigned',
+              'Created': formatDate(i.createdAt)
+            }));
+            filename = 'all-inquiries';
+            break;
+            
+          case 'activeInquiries':
+            data = inquiries.filter(i => 
+              ['New', 'Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+            ).map(i => ({
+              'ID': i.id,
+              'Property': i.propertyName,
+              'Customer': i.customerName,
+              'Email': i.customerEmail,
+              'Phone': i.customerPhone,
+              'Status': i.status,
+              'Agent': i.assignedAgentName || 'Unassigned',
+              'Created': formatDate(i.createdAt)
+            }));
+            filename = 'active-inquiries';
+            break;
+            
+          case 'soldProperties':
+            data = properties.filter(p => p.status === 'Sold').map(p => ({
+              'Property': p.name,
+              'Type': p.propertyType,
+              'Location': `${p.address.city}, ${p.address.province}`,
+              'Original Price': formatPHP(p.price),
+              'Final Price': formatPHP(p.finalSalePrice || p.price),
+              'Sold Date': formatDate(p.soldDate),
+              'Commission': formatPHP(p.commission)
+            }));
+            filename = 'sold-properties';
+            break;
+            
+          case 'salesCommissions':
+            data = properties.filter(p => p.status === 'Sold').map(p => ({
+              'Property': p.name,
+              'Sale Price': p.finalSalePrice || p.price,
+              'Commission': p.commission || 0,
+              'Commission Paid': p.commissionPaid ? 'Yes' : 'No',
+              'Sold Date': formatDate(p.soldDate)
+            }));
+            filename = 'sales-commissions';
+            break;
+            
+          case 'agentPerformance':
+            data = users.filter(u => u.role === 'agent').map(a => ({
+              'Agent': a.name,
+              'Email': a.email,
+              'Active Inquiries': a.activeInquiries || 0,
+              'Properties Sold': a.propertiesSold || 0,
+              'Total Commission': a.totalCommission || 0
+            }));
+            filename = 'agent-performance';
+            break;
+        }
+        
+        if (data.length === 0) {
+          showAlert('No data to export', 'warning');
+          return;
+        }
+        
+        exportToCSV(data, filename);
+      });
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

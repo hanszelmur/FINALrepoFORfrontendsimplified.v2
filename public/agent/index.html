@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Portal - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* SPA Styles */
+    .agent-layout {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f8f9fa;
+    }
+    
+    .agent-sidebar {
+      width: 250px;
+      background-color: #1e293b;
+      color: white;
+      padding: 2rem 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    
+    .agent-content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 2rem;
+      width: calc(100% - 250px);
+      min-height: 100vh;
+    }
+    
+    .portal-section {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .portal-section.hidden {
+      display: none;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .agent-sidebar a {
+      display: block;
+      padding: 1rem 1.5rem;
+      color: #cbd5e0;
+      text-decoration: none;
+      transition: all 0.3s;
+      border-left: 3px solid transparent;
+    }
+    
+    .agent-sidebar a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-left-color: #10b981;
+    }
+    
+    .agent-sidebar a.active {
+      background-color: #10b981;
+      color: white;
+      border-left-color: #34d399;
+    }
+    
+    .agent-sidebar-brand {
+      padding: 0 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 1rem;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .agent-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      
+      .agent-content {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="agent-layout">
+    <!-- Sidebar -->
+    <aside class="agent-sidebar">
+      <div class="agent-sidebar-brand">🏠 TES Property Agent</div>
+      <nav>
+        <a href="#dashboard" onclick="showSection('dashboard'); return false;" data-section="dashboard">📊 Dashboard</a>
+        <a href="#inquiries" onclick="showSection('inquiries'); return false;" data-section="inquiries">📋 My Inquiries</a>
+        <a href="#calendar" onclick="showSection('calendar'); return false;" data-section="calendar">📅 Calendar</a>
+        <a href="#my-properties" onclick="showSection('my-properties'); return false;" data-section="my-properties">🏠 My Properties</a>
+        <a href="#" onclick="logout(); return false;" style="margin-top: 2rem; background-color: #dc2626; color: white;">🚪 Logout</a>
+      </nav>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="agent-content">
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="portal-section" data-section="dashboard">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1>My Dashboard</h1>
+        <p class="text-muted">Welcome back, <span id="userName">Agent</span></p>
+      </div>
+      <div>
+        <button onclick="location.reload()" class="btn btn-outline btn-sm">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <!-- My Tasks Today -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-body">
+        <h3>📅 My Tasks Today</h3>
+        <div id="tasksToday" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          📋
+        </div>
+        <div class="stat-info">
+          <h3 id="activeInquiries">0</h3>
+          <p>Active Inquiries</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          📅
+        </div>
+        <div class="stat-info">
+          <h3 id="viewingsThisWeek">0</h3>
+          <p>Viewings This Week</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          🏠
+        </div>
+        <div class="stat-info">
+          <h3 id="propertiesSold">0</h3>
+          <p>Properties Sold (Month)</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          💰
+        </div>
+        <div class="stat-info">
+          <h3 id="commissionEarned">₱0.00</h3>
+          <p>Commission Earned</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <h3>📊 Recent Activity</h3>
+        <div id="recentActivity" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- Inquiries Section -->
+      <section id="inquiries" class="portal-section hidden" data-section="inquiries">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>My Inquiries</h1>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Viewing Scheduled">Viewing Scheduled</option>
+            <option value="Viewed - Interested">Viewed - Interested</option>
+            <option value="Viewed - Not Interested">Viewed - Not Interested</option>
+            <option value="Viewed - Undecided">Viewed - Undecided</option>
+            <option value="Deposit Paid">Deposit Paid</option>
+            <option value="Successful">Successful</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inquiries Table -->
+    <div class="card" style="margin-top: 2rem;">
+      <div class="card-body">
+        <div id="inquiriesTable">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Update Status Modal -->
+  <div id="statusModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Update Status</h2>
+        <button class="modal-close" onclick="closeModal('statusModal')">&times;</button>
+      </div>
+      <div>
+        <div class="form-group">
+          <label for="newStatus">Select New Status</label>
+          <select id="newStatus">
+            <option value="In Progress">In Progress</option>
+            <option value="Viewing Scheduled">Viewing Scheduled</option>
+            <option value="Viewed - Interested">Viewed - Interested</option>
+            <option value="Viewed - Not Interested">Viewed - Not Interested</option>
+            <option value="Viewed - Undecided">Viewed - Undecided</option>
+            <option value="Deposit Paid">Deposit Paid</option>
+            <option value="Successful">Successful</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmStatusUpdate()" class="btn btn-primary">Update</button>
+          <button onclick="closeModal('statusModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Notes Modal -->
+  <div id="notesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Notes</h2>
+        <button class="modal-close" onclick="closeModal('notesModal')">&times;</button>
+      </div>
+      <div>
+        <div class="form-group">
+          <label for="newNotes">Notes</label>
+          <textarea id="newNotes" rows="5" placeholder="Add your notes here..."></textarea>
+        </div>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button onclick="confirmAddNotes()" class="btn btn-primary">Save Notes</button>
+          <button onclick="closeModal('notesModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contact Customer Modal -->
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Contact Customer</h2>
+        <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
+      </div>
+      <div id="contactModalBody">
+        <!-- Contact info will be loaded here -->
+      </div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- Calendar Section -->
+      <section id="calendar" class="portal-section hidden" data-section="calendar">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <div class="d-flex justify-between align-center" style="margin-bottom: 2rem;">
+      <h1>My Calendar</h1>
+      <button onclick="openAddEventModal()" class="btn btn-primary">+ Add Event</button>
+    </div>
+    
+    <!-- Calendar View -->
+    <div class="card">
+      <div class="card-body">
+        <h3>My Upcoming Viewings</h3>
+        <div id="calendarEvents" style="margin-top: 1.5rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Event Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Event</h2>
+        <button class="modal-close" onclick="closeModal('eventModal')">&times;</button>
+      </div>
+      <form id="eventForm">
+        <div class="form-group">
+          <label for="eventType">Event Type</label>
+          <select id="eventType" required>
+            <option value="viewing">Viewing</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </div>
+        
+        <div id="viewingFields">
+          <div class="form-group">
+            <label for="eventInquiry">Select Inquiry</label>
+            <select id="eventInquiry">
+              <option value="">Select an inquiry</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="unavailableFields" style="display: none;">
+          <div class="form-group">
+            <label for="eventReason">Reason</label>
+            <input type="text" id="eventReason" placeholder="e.g., Personal leave, Training">
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label for="eventDate">Date</label>
+            <input type="date" id="eventDate" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="eventTime">Time</label>
+            <input type="time" id="eventTime" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="eventStatus">Status</label>
+          <select id="eventStatus">
+            <option value="confirmed">Confirmed</option>
+            <option value="tentative">Tentative</option>
+          </select>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary">Save Event</button>
+          <button type="button" onclick="closeModal('eventModal')" class="btn btn-outline">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+      
+      <!-- My Properties Section -->
+      <section id="my-properties" class="portal-section hidden" data-section="my-properties">
+        <div class="container" style="margin: 0;">
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>My Properties</h1>
+    <p class="text-muted">Properties where I have active inquiries</p>
+    
+    <!-- Properties Grid -->
+    <div id="propertiesGrid" class="grid grid-cols-3" style="margin-top: 2rem;">
+      <div class="spinner"></div>
+    </div>
+  </div>
+  
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <!-- Include Firebase and utility scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  
+  <script>
+    // ===== GLOBAL STATE AND SPA LOGIC =====
+    let currentUser = null;
+    let currentSection = 'dashboard';
+    
+    // SPA Navigation Logic
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.portal-section').forEach(section => {
+        section.classList.add('hidden');
+      });
+      
+      // Update active nav link
+      document.querySelectorAll('.agent-sidebar a').forEach(link => {
+        link.classList.remove('active');
+      });
+      const activeLink = document.querySelector(`.agent-sidebar a[data-section="${sectionId}"]`);
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+      
+      // Update URL hash (no page reload!)
+      window.location.hash = sectionId;
+      
+      // Show selected section
+      const targetSection = document.getElementById(sectionId);
+      if (targetSection) {
+        targetSection.classList.remove('hidden');
+      }
+      
+      currentSection = sectionId;
+      
+      // Load section-specific data
+      loadSectionData(sectionId);
+    }
+    
+    function loadSectionData(sectionId) {
+      console.log('Loading agent section:', sectionId);
+      switch(sectionId) {
+        case 'dashboard':
+          if (typeof loadDashboardData === 'function') loadDashboardData();
+          break;
+        case 'inquiries':
+          if (typeof loadMyInquiries === 'function') loadMyInquiries();
+          break;
+        case 'calendar':
+          if (typeof loadCalendar === 'function') loadCalendar();
+          break;
+        case 'my-properties':
+          if (typeof loadMyProperties === 'function') loadMyProperties();
+          break;
+      }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Agent SPA initializing...');
+      
+      // Check authentication
+      if (!checkAuth || !checkAuth('agent')) {
+        console.log('Auth failed, redirecting to login');
+        window.location.href = '../shared/login.html';
+        return;
+      }
+      
+      currentUser = getCurrentUser();
+      console.log('Current user:', currentUser);
+      
+      // Update user name if element exists
+      const userNameEl = document.getElementById('agentName');
+      if (userNameEl && currentUser) {
+        userNameEl.textContent = currentUser.name;
+      }
+      
+      // Initialize navigation
+      if (typeof initNavigation === 'function') {
+        initNavigation('agent');
+      }
+      
+      // Initialize Firebase
+      if (!initializeFirebase || !initializeFirebase()) {
+        showAlert('Unable to connect to database', 'danger');
+        return;
+      }
+      
+      // Load initial section based on hash or default to dashboard
+      const hash = window.location.hash.substring(1) || 'dashboard';
+      console.log('Initial section:', hash);
+      showSection(hash);
+    });
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.substring(1) || 'dashboard';
+      console.log('Hash changed to:', hash);
+      showSection(hash);
+    });
+    
+    function logout() {
+      if (typeof clearCurrentUser === 'function') {
+        clearCurrentUser();
+      }
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== DASHBOARD SECTION SCRIPTS =====
+    let myInquiries = [];
+    
+          if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      document.getElementById('userName').textContent = currentUser.name;
+      
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadDashboardData();
+        setupRealTimeListeners();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadDashboardData() {
+      loadInquiries();
+      loadCalendarEvents();
+      loadUserStats();
+    }
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        myInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const inquiry = data[key];
+            if (inquiry.assignedAgentId === currentUser.id) {
+              myInquiries.push({ key: key, ...inquiry });
+            }
+          });
+          
+          myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        updateTasksToday();
+        updateRecentActivity();
+        updateActiveInquiriesCount();
+      });
+    }
+    
+    function updateTasksToday() {
+      const container = document.getElementById('tasksToday');
+      const now = new Date();
+      const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+      
+      // Urgent: No contact in 48+ hours
+      const urgent = myInquiries.filter(i => 
+        ['Assigned', 'In Progress'].includes(i.status) &&
+        new Date(i.createdAt) < twoDaysAgo
+      );
+      
+      // Viewings scheduled today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todayViewings = myInquiries.filter(i => 
+        i.status === 'Viewing Scheduled'
+      );
+      
+      // Active inquiries
+      const active = myInquiries.filter(i => 
+        ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided'].includes(i.status)
+      );
+      
+      const tasks = [];
+      
+      if (urgent.length > 0) {
+        tasks.push(`
+          <div style="padding: 1rem; background-color: #fed7d7; border-left: 4px solid var(--danger-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
+            <strong>🔴 Urgent:</strong> ${urgent.length} inquiry/inquiries with no contact for 48+ hours
+            <a href="inquiries.html?filter=urgent" class="btn btn-sm btn-danger" style="float: right; margin-top: -0.25rem;">View</a>
+          </div>
+        `);
+      }
+      
+      if (todayViewings.length > 0) {
+        tasks.push(`
+          <div style="padding: 1rem; background-color: #feebc8; border-left: 4px solid var(--warning-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
+            <strong>🟡 Today's Viewings:</strong> ${todayViewings.length} scheduled viewing(s)
+            <a href="calendar.html" class="btn btn-sm btn-warning" style="float: right; margin-top: -0.25rem;">View Calendar</a>
+          </div>
+        `);
+      }
+      
+      tasks.push(`
+        <div style="padding: 1rem; background-color: #c6f6d5; border-left: 4px solid var(--success-color); border-radius: var(--border-radius); margin-bottom: 1rem;">
+          <strong>🟢 Active Inquiries:</strong> ${active.length} inquiry/inquiries to follow up
+          <a href="inquiries.html" class="btn btn-sm btn-success" style="float: right; margin-top: -0.25rem;">View All</a>
+        </div>
+      `);
+      
+      container.innerHTML = tasks.join('');
+    }
+    
+    function updateRecentActivity() {
+      const container = document.getElementById('recentActivity');
+      
+      if (myInquiries.length === 0) {
+        container.innerHTML = '<p class="text-muted">No inquiries assigned yet</p>';
+        return;
+      }
+      
+      const recent = myInquiries.slice(0, 10);
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recent.map(inquiry => `
+                <tr>
+                  <td><strong>${inquiry.propertyName}</strong></td>
+                  <td>${inquiry.customerName}</td>
+                  <td><span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></td>
+                  <td>${getTimeAgo(inquiry.createdAt)}</td>
+                  <td>
+                    <a href="inquiries.html?id=${inquiry.id}" class="btn btn-sm btn-primary">View</a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function updateActiveInquiriesCount() {
+      const active = myInquiries.filter(i => 
+        ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+      );
+      
+      document.getElementById('activeInquiries').textContent = active.length;
+    }
+    
+    function loadCalendarEvents() {
+      const calendarRef = getCalendarRef();
+      
+      calendarRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+          document.getElementById('viewingsThisWeek').textContent = '0';
+          return;
+        }
+        
+        const events = Object.values(data);
+        const now = new Date();
+        const weekEnd = new Date(now);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        
+        const myViewings = events.filter(e => 
+          e.type === 'viewing' &&
+          e.agentId === currentUser.id &&
+          new Date(e.date) <= weekEnd &&
+          new Date(e.date) >= now
+        );
+        
+        document.getElementById('viewingsThisWeek').textContent = myViewings.length;
+      });
+    }
+    
+    function loadUserStats() {
+      const usersRef = getUsersRef();
+      
+      usersRef.child(`user_${currentUser.id}`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (data) {
+          document.getElementById('propertiesSold').textContent = data.propertiesSold || 0;
+          document.getElementById('commissionEarned').textContent = formatPHP(data.totalCommission || 0);
+        }
+      });
+    }
+    
+    function setupRealTimeListeners() {
+      const inquiriesRef = getInquiriesRef();
+      let isFirstLoad = true;
+      
+      inquiriesRef.on('child_added', (snapshot) => {
+        if (isFirstLoad) return;
+        
+        const inquiry = snapshot.val();
+        if (inquiry.assignedAgentId === currentUser.id) {
+          showAlert(`New inquiry assigned: ${inquiry.propertyName}`, 'info');
+        }
+      });
+      
+      setTimeout(() => {
+        isFirstLoad = false;
+      }, 1000);
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== INQUIRIES SECTION SCRIPTS =====
+    let myInquiries = [];
+    let currentInquiry = null;
+    
+          if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadInquiries();
+        setupFilters();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        myInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const inquiry = data[key];
+            if (inquiry.assignedAgentId === currentUser.id) {
+              myInquiries.push({ key: key, ...inquiry });
+            }
+          });
+          
+          myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        displayInquiries(myInquiries);
+      });
+    }
+    
+    function displayInquiries(inquiries) {
+      const container = document.getElementById('inquiriesTable');
+      
+      if (inquiries.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align: center; padding: 2rem;">No inquiries assigned yet</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Property</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Preferred Contact</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inquiries.map(inquiry => `
+                <tr>
+                  <td>#${inquiry.id}</td>
+                  <td><strong>${inquiry.propertyName}</strong></td>
+                  <td>
+                    ${inquiry.customerName}<br>
+                    <small class="text-muted">${inquiry.customerEmail}</small>
+                  </td>
+                  <td>${inquiry.customerPhone}</td>
+                  <td><span class="badge badge-info">${inquiry.preferredContact}</span></td>
+                  <td><span class="badge ${getStatusBadgeClass(inquiry.status)}">${inquiry.status}</span></td>
+                  <td>${formatDate(inquiry.createdAt)}</td>
+                  <td>
+                    <button onclick="updateStatus('${inquiry.key}')" class="btn btn-sm btn-primary" title="Update Status">📝</button>
+                    <button onclick="addNotes('${inquiry.key}')" class="btn btn-sm btn-outline" title="Add Notes">📄</button>
+                    <button onclick="contactCustomer('${inquiry.key}')" class="btn btn-sm btn-success" title="Contact">📞</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+    
+    function setupFilters() {
+      document.getElementById('filterStatus').addEventListener('change', applyFilters);
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      
+      let filtered = myInquiries;
+      
+      if (status) {
+        filtered = filtered.filter(i => i.status === status);
+      }
+      
+      displayInquiries(filtered);
+    }
+    
+    function updateStatus(inquiryKey) {
+      currentInquiry = myInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      document.getElementById('newStatus').value = currentInquiry.status;
+      openModal('statusModal');
+    }
+    
+    function confirmStatusUpdate() {
+      const newStatus = document.getElementById('newStatus').value;
+      
+      if (!newStatus) {
+        showAlert('Please select a status', 'danger');
+        return;
+      }
+      
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      const timestamp = new Date().toISOString();
+      
+      inquiryRef.update({
+        status: newStatus,
+        statusHistory: [
+          ...currentInquiry.statusHistory,
+          {
+            status: newStatus,
+            changedBy: currentUser.name,
+            timestamp: timestamp
+          }
+        ]
+      }).then(() => {
+        showAlert('Status updated successfully', 'success');
+        closeModal('statusModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error updating status:', error);
+        showAlert('Failed to update status', 'danger');
+      });
+    }
+    
+    function addNotes(inquiryKey) {
+      currentInquiry = myInquiries.find(i => i.key === inquiryKey);
+      if (!currentInquiry) return;
+      
+      document.getElementById('newNotes').value = '';
+      openModal('notesModal');
+    }
+    
+    function confirmAddNotes() {
+      const notes = document.getElementById('newNotes').value.trim();
+      
+      if (!notes) {
+        showAlert('Please enter notes', 'danger');
+        return;
+      }
+      
+      const timestamp = new Date().toISOString();
+      const existingNotes = currentInquiry.notes || '';
+      const newNotes = `${existingNotes}\n[${formatDateTime(timestamp)} - ${currentUser.name}]\n${notes}`;
+      
+      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
+      
+      inquiryRef.update({
+        notes: newNotes.trim()
+      }).then(() => {
+        showAlert('Notes added successfully', 'success');
+        closeModal('notesModal');
+        currentInquiry = null;
+      }).catch(error => {
+        console.error('Error adding notes:', error);
+        showAlert('Failed to add notes', 'danger');
+      });
+    }
+    
+    function contactCustomer(inquiryKey) {
+      const inquiry = myInquiries.find(i => i.key === inquiryKey);
+      if (!inquiry) return;
+      
+      const smsTemplates = [
+        `Hi ${inquiry.customerName.split(' ')[0]}, this is ${currentUser.name} from TES Property regarding ${inquiry.propertyName}. When would be a good time to schedule a viewing?`,
+        `Good day ${inquiry.customerName.split(' ')[0]}! I'm ${currentUser.name} from TES Property. I'd like to discuss ${inquiry.propertyName} with you. Are you available for a call?`,
+        `Hello ${inquiry.customerName.split(' ')[0]}, ${currentUser.name} here from TES Property. I have the details for ${inquiry.propertyName}. Would you like to schedule a viewing?`
+      ];
+      
+      const modalBody = document.getElementById('contactModalBody');
+      
+      modalBody.innerHTML = `
+        <div style="margin-bottom: 1.5rem;">
+          <h4>Customer Information</h4>
+          <p><strong>Name:</strong> ${inquiry.customerName}</p>
+          <p><strong>Email:</strong> <a href="mailto:${inquiry.customerEmail}">${inquiry.customerEmail}</a></p>
+          <p><strong>Phone:</strong> <a href="tel:${inquiry.customerPhone}">${inquiry.customerPhone}</a></p>
+          <p><strong>Preferred Method:</strong> <span class="badge badge-info">${inquiry.preferredContact}</span></p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <h4>Property</h4>
+          <p><strong>${inquiry.propertyName}</strong></p>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <h4>Customer Message</h4>
+          <p style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius);">
+            ${inquiry.message}
+          </p>
+        </div>
+        
+        <div>
+          <h4>SMS Templates (Click to copy)</h4>
+          ${smsTemplates.map((template, index) => {
+            // Properly escape template for onclick attribute
+            const escapedTemplate = template.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            return `
+              <div style="background-color: var(--gray-100); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 0.5rem; cursor: pointer;" onclick="copyToClipboard('${escapedTemplate}')">
+                <small>${template}</small>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      
+      openModal('contactModal');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== CALENDAR SECTION SCRIPTS =====
+    let myInquiries = [];
+    
+          if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadEvents();
+        loadInquiries();
+        setupEventForm();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadEvents() {
+      const calendarRef = getCalendarRef();
+      
+      calendarRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const events = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const event = data[key];
+            if (event.agentId === currentUser.id) {
+              events.push({ key: key, ...event });
+            }
+          });
+          
+          events.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+        }
+        
+        displayEvents(events);
+      });
+    }
+    
+    function displayEvents(events) {
+      const container = document.getElementById('calendarEvents');
+      const now = new Date();
+      
+      const upcoming = events.filter(e => new Date(e.date + ' ' + e.time) >= now);
+      
+      if (upcoming.length === 0) {
+        container.innerHTML = '<p class="text-muted">No upcoming events</p>';
+        return;
+      }
+      
+      container.innerHTML = upcoming.map(event => {
+        const statusClass = event.status === 'confirmed' ? 'event-confirmed' : 'event-tentative';
+        const icon = event.type === 'viewing' ? '👁️' : '🚫';
+        
+        return `
+          <div class="calendar-event ${statusClass}" style="padding: 1rem; margin-bottom: 0.5rem;">
+            <div class="d-flex justify-between align-center">
+              <div>
+                <strong>${icon} ${event.type === 'viewing' ? event.propertyName : 'Unavailable'}</strong><br>
+                <small>${formatDate(event.date)} at ${event.time}</small>
+                ${event.customerName ? `<br><small>Customer: ${event.customerName}</small>` : ''}
+                ${event.reason ? `<br><small>Reason: ${event.reason}</small>` : ''}
+              </div>
+              <span class="badge ${event.status === 'confirmed' ? 'badge-success' : 'badge-warning'}">
+                ${event.status}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function loadInquiries() {
+      const inquiriesRef = getInquiriesRef();
+      
+      inquiriesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        myInquiries = [];
+        
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const inquiry = data[key];
+            if (inquiry.assignedAgentId === currentUser.id && 
+                ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided'].includes(inquiry.status)) {
+              myInquiries.push({ key: key, ...inquiry });
+            }
+          });
+        }
+        
+        updateInquiryDropdown();
+      });
+    }
+    
+    function updateInquiryDropdown() {
+      const select = document.getElementById('eventInquiry');
+      select.innerHTML = '<option value="">Select an inquiry</option>';
+      
+      myInquiries.forEach(inquiry => {
+        select.innerHTML += `<option value="${inquiry.id}">${inquiry.propertyName} - ${inquiry.customerName}</option>`;
+      });
+    }
+    
+    function openAddEventModal() {
+      document.getElementById('eventForm').reset();
+      document.getElementById('viewingFields').style.display = 'block';
+      document.getElementById('unavailableFields').style.display = 'none';
+      openModal('eventModal');
+    }
+    
+    function setupEventForm() {
+      document.getElementById('eventType').addEventListener('change', function() {
+        const type = this.value;
+        
+        if (type === 'viewing') {
+          document.getElementById('viewingFields').style.display = 'block';
+          document.getElementById('unavailableFields').style.display = 'none';
+        } else {
+          document.getElementById('viewingFields').style.display = 'none';
+          document.getElementById('unavailableFields').style.display = 'block';
+        }
+      });
+      
+      document.getElementById('eventForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const type = document.getElementById('eventType').value;
+        const date = document.getElementById('eventDate').value;
+        const time = document.getElementById('eventTime').value;
+        const status = document.getElementById('eventStatus').value;
+        
+        const event = {
+          id: Date.now(),
+          type: type,
+          agentId: currentUser.id,
+          agentName: currentUser.name,
+          date: date,
+          time: time,
+          status: status,
+          createdAt: new Date().toISOString()
+        };
+        
+        if (type === 'viewing') {
+          const inquiryId = parseInt(document.getElementById('eventInquiry').value);
+          if (!inquiryId) {
+            showAlert('Please select an inquiry', 'danger');
+            return;
+          }
+          
+          const inquiry = myInquiries.find(i => i.id === inquiryId);
+          if (inquiry) {
+            event.inquiryId = inquiry.id;
+            event.propertyId = inquiry.propertyId;
+            event.propertyName = inquiry.propertyName;
+            event.customerName = inquiry.customerName;
+          }
+        } else {
+          event.reason = document.getElementById('eventReason').value;
+          event.time = 'All Day';
+        }
+        
+        const calendarRef = getCalendarRef();
+        const newEventKey = calendarRef.push().key;
+        
+        calendarRef.child(newEventKey).set(event)
+          .then(() => {
+            showAlert('Event added successfully', 'success');
+            closeModal('eventModal');
+          })
+          .catch(error => {
+            console.error('Error adding event:', error);
+            showAlert('Failed to add event', 'danger');
+          });
+      });
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+    
+    // ===== MY PROPERTIES SECTION SCRIPTS =====
+    
+          if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadMyProperties();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadMyProperties() {
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      
+      Promise.all([
+        inquiriesRef.once('value'),
+        propertiesRef.once('value')
+      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
+        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
+        const allProperties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+        
+        // Get my active inquiries
+        const myInquiries = inquiries.filter(i => 
+          i.assignedAgentId === currentUser.id &&
+          ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+        );
+        
+        // Get unique property IDs
+        const propertyIds = [...new Set(myInquiries.map(i => i.propertyId))];
+        
+        // Get properties
+        const myProperties = allProperties.filter(p => propertyIds.includes(p.id));
+        
+        // Count inquiries per property
+        const propertiesWithCount = myProperties.map(p => ({
+          ...p,
+          inquiryCount: myInquiries.filter(i => i.propertyId === p.id).length
+        }));
+        
+        displayProperties(propertiesWithCount);
+      });
+    }
+    
+    function displayProperties(properties) {
+      const grid = document.getElementById('propertiesGrid');
+      
+      if (properties.length === 0) {
+        grid.innerHTML = '<p class="text-muted" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">No properties with active inquiries</p>';
+        return;
+      }
+      
+      grid.innerHTML = properties.map(property => `
+        <div class="card">
+          <img src="${property.photos && property.photos[0] ? property.photos[0].url : 'https://via.placeholder.com/400x300?text=Property'}" 
+               alt="${property.name}" 
+               class="card-img">
+          <div class="card-body">
+            <h3 class="card-title">${property.name}</h3>
+            
+            <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+              ${formatAddress(property.address)}
+            </p>
+            
+            <p style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem;">
+              ${formatPHP(property.price)}
+            </p>
+            
+            <p class="card-text" style="margin-bottom: 1rem;">
+              ${property.propertyType} • ${property.floorArea}m²
+            </p>
+            
+            <div style="background-color: var(--gray-100); padding: 0.75rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
+              <strong>My Inquiries:</strong> ${property.inquiryCount}<br>
+              <strong>Commission:</strong> ${formatPHP(property.commission)}
+            </div>
+            
+            <a href="inquiries.html" class="btn btn-primary" style="width: 100%;">View My Inquiries</a>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>
