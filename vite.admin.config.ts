@@ -10,7 +10,7 @@ export default defineConfig({
   publicDir: 'public/assets',
   server: {
     port: 3002,
-    open: '/public/admin/index.html'
+    open: 'public/admin/index.html'
   },
   build: {
     outDir: 'dist/admin',

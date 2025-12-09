@@ -283,6 +283,8 @@
             }
           } else if (script.textContent) {
             // Inline script - wrap in function and execute
+            // Security Note: This is safe because we only load content from our own
+            // trusted _*.html files, not from user input or external sources
             try {
               const scriptFunction = new Function(script.textContent);
               scriptFunction();

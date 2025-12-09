@@ -10,7 +10,7 @@ export default defineConfig({
   publicDir: 'public/assets',
   server: {
     port: 3003,
-    open: '/public/agent/index.html'
+    open: 'public/agent/index.html'
   },
   build: {
     outDir: 'dist/agent',
