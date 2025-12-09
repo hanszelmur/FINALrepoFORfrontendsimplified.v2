@@ -3,6 +3,7 @@
  * Port 3002
  */
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 export default defineConfig({
   root: './public',
@@ -12,6 +13,11 @@ export default defineConfig({
   },
   build: {
     outDir: '../dist/admin',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'public/admin/index.html')
+      }
+    }
   }
 });
