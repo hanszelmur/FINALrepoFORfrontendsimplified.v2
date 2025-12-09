@@ -213,6 +213,8 @@ export function bulkAddNotes(
 /**
  * Validate bulk operation is allowed
  */
+const MAX_BULK_OPERATION_SIZE = 50;
+
 export function validateBulkOperation(
   operation: 'assign' | 'cancel' | 'status' | 'notes',
   inquiryIds: number[],
@@ -224,8 +226,8 @@ export function validateBulkOperation(
     errors.push('No inquiries selected');
   }
 
-  if (inquiryIds.length > 50) {
-    errors.push('Cannot perform bulk operation on more than 50 inquiries at once');
+  if (inquiryIds.length > MAX_BULK_OPERATION_SIZE) {
+    errors.push(`Cannot perform bulk operation on more than ${MAX_BULK_OPERATION_SIZE} inquiries at once`);
   }
 
   inquiryIds.forEach((id) => {

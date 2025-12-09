@@ -34,6 +34,7 @@ export interface SystemAnalytics {
 }
 
 const STORAGE_KEY = 'tes_property_views';
+const MAX_STORED_VIEWS = 1000;
 
 /**
  * Track property view
@@ -50,9 +51,9 @@ export function trackPropertyView(
       source,
     });
 
-    // Keep only last 1000 views to prevent storage bloat
-    if (views.length > 1000) {
-      views.splice(0, views.length - 1000);
+    // Keep only last MAX_STORED_VIEWS to prevent storage bloat
+    if (views.length > MAX_STORED_VIEWS) {
+      views.splice(0, views.length - MAX_STORED_VIEWS);
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(views));

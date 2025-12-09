@@ -52,10 +52,12 @@ export function searchProperties(
 
   // Price range filter
   if (criteria.minPrice !== undefined) {
-    results = results.filter((property) => property.price >= criteria.minPrice!);
+    const minPrice = criteria.minPrice;
+    results = results.filter((property) => property.price >= minPrice);
   }
   if (criteria.maxPrice !== undefined) {
-    results = results.filter((property) => property.price <= criteria.maxPrice!);
+    const maxPrice = criteria.maxPrice;
+    results = results.filter((property) => property.price <= maxPrice);
   }
 
   // Property type filter

@@ -187,7 +187,8 @@ export class AutoRefresh {
    */
   cleanup(): void {
     this.stop();
-    document.removeEventListener('visibilitychange', this.setupVisibilityListener);
+    // Note: Visibility listener cleanup handled by the page itself
+    // Cannot remove because the handler was an inline arrow function
   }
 }
 

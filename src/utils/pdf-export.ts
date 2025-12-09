@@ -120,8 +120,9 @@ export async function exportPropertyToPDF(property: Property): Promise<void> {
       align: 'center',
     });
 
-    // Save PDF
-    doc.save(`property-${property.id}-${property.name.replace(/\s+/g, '-')}.pdf`);
+    // Save PDF with sanitized filename
+    const sanitizedName = property.name.replace(/[^a-zA-Z0-9-_]/g, '-').replace(/--+/g, '-');
+    doc.save(`property-${property.id}-${sanitizedName}.pdf`);
   } catch (error) {
     console.error('[PDF Export] Failed to export property:', error);
     throw new Error('Failed to generate PDF. Please try again.');

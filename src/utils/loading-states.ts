@@ -240,14 +240,14 @@ export function debounceLoading<T extends (...args: any[]) => any>(
   func: T,
   delay: number = 300
 ): (...args: Parameters<T>) => void {
-  let timeoutId: number | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return (...args: Parameters<T>) => {
     if (timeoutId !== null) {
       clearTimeout(timeoutId);
     }
 
-    timeoutId = window.setTimeout(() => {
+    timeoutId = setTimeout(() => {
       func(...args);
       timeoutId = null;
     }, delay);

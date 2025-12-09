@@ -142,12 +142,15 @@ function validatePropertyRow(row: CSVPropertyRow): { valid: boolean; errors: str
     errors.push('ZIP code must be 4 digits');
   }
 
-  // Price validation
+  // Price validation constants
+  const MIN_PROPERTY_PRICE = 100000;
+  const MAX_PROPERTY_PRICE = 999000000;
+  
   const price = Number(row.price);
   if (isNaN(price) || price <= 0) {
     errors.push('Price must be a positive number');
-  } else if (price < 100000 || price > 999000000) {
-    errors.push('Price must be between ₱100,000 and ₱999,000,000');
+  } else if (price < MIN_PROPERTY_PRICE || price > MAX_PROPERTY_PRICE) {
+    errors.push(`Price must be between ₱${MIN_PROPERTY_PRICE.toLocaleString()} and ₱${MAX_PROPERTY_PRICE.toLocaleString()}`);
   }
 
   // Status validation
