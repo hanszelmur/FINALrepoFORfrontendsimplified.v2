@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal - TES Property</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* Admin Portal SPA Layout */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    .admin-sidebar {
+      width: 250px;
+      background-color: var(--gray-900);
+      color: var(--white);
+      padding: 2rem 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .admin-sidebar-brand {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--white);
+      padding: 0 1.5rem;
+      margin-bottom: 2rem;
+      display: block;
+    }
+    
+    .admin-sidebar nav {
+      background: none;
+      box-shadow: none;
+      position: static;
+    }
+    
+    .admin-sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .admin-sidebar li {
+      margin: 0;
+    }
+    
+    .admin-sidebar a {
+      display: block;
+      padding: 1rem 1.5rem;
+      color: var(--gray-300);
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-sidebar a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--white);
+    }
+    
+    .admin-sidebar a.active {
+      background-color: var(--primary-color);
+      color: var(--white);
+      border-radius: 0;
+    }
+    
+    .admin-content {
+      margin-left: 250px;
+      flex: 1;
+      padding: 2rem;
+      background-color: var(--gray-100);
+    }
+    
+    .admin-header {
+      background-color: var(--white);
+      padding: 1rem 2rem;
+      margin: -2rem -2rem 2rem -2rem;
+      box-shadow: var(--box-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .portal-section {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .portal-section.hidden {
+      display: none;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <a href="#dashboard" class="admin-sidebar-brand">🏠 TES Property Admin</a>
+      <nav>
+        <ul>
+          <li><a href="#dashboard" onclick="showSection('dashboard'); return false;">📊 Dashboard</a></li>
+          <li><a href="#inquiries" onclick="showSection('inquiries'); return false;">📋 Inquiries</a></li>
+          <li><a href="#properties" onclick="showSection('properties'); return false;">🏠 Properties</a></li>
+          <li><a href="#agents" onclick="showSection('agents'); return false;">👥 Agents</a></li>
+          <li><a href="#reports" onclick="showSection('reports'); return false;">📈 Reports</a></li>
+          <li><a href="#" onclick="logout(); return false;" class="btn btn-danger btn-sm" style="margin: 1rem 1.5rem;">Logout</a></li>
+        </ul>
+      </nav>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="admin-content">
+      <div class="admin-header">
+        <div>
+          <h2 id="page-title">Dashboard</h2>
+          <p class="text-muted">Welcome back, <span id="userName">Admin</span></p>
+        </div>
+        <div>
+          <button onclick="refreshCurrentSection()" class="btn btn-outline btn-sm">🔄 Refresh</button>
+        </div>
+      </div>
+      
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="portal-section" data-section="dashboard">
+        <div style="text-align: center; padding: 3rem;">
+          <div class="spinner" style="margin: 0 auto 1rem;"></div>
+          <p>Loading dashboard...</p>
+        </div>
+      </section>
+      
+      <!-- Inquiries Section -->
+      <section id="inquiries" class="portal-section hidden" data-section="inquiries">
+        <div style="text-align: center; padding: 3rem;">
+          <div class="spinner" style="margin: 0 auto 1rem;"></div>
+          <p>Loading inquiries...</p>
+        </div>
+      </section>
+      
+      <!-- Properties Section -->
+      <section id="properties" class="portal-section hidden" data-section="properties">
+        <div style="text-align: center; padding: 3rem;">
+          <div class="spinner" style="margin: 0 auto 1rem;"></div>
+          <p>Loading properties...</p>
+        </div>
+      </section>
+      
+      <!-- Agents Section -->
+      <section id="agents" class="portal-section hidden" data-section="agents">
+        <div style="text-align: center; padding: 3rem;">
+          <div class="spinner" style="margin: 0 auto 1rem;"></div>
+          <p>Loading agents...</p>
+        </div>
+      </section>
+      
+      <!-- Reports Section -->
+      <section id="reports" class="portal-section hidden" data-section="reports">
+        <div style="text-align: center; padding: 3rem;">
+          <div class="spinner" style="margin: 0 auto 1rem;"></div>
+          <p>Loading reports...</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    // Section content cache
+    const sectionContent = {};
+    const sectionScripts = {};
+    let currentUser = null;
+    
+    // Page titles for each section
+    const pageTitles = {
+      dashboard: 'Dashboard',
+      inquiries: 'Inquiry Management',
+      properties: 'Property Management',
+      agents: 'Agent Management',
+      reports: 'Reports'
+    };
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check authentication
+      if (!checkAuth('admin')) {
+        return;
+      }
+      
+      currentUser = getCurrentUser();
+      document.getElementById('userName').textContent = currentUser.name;
+      
+      // Load initial section based on hash or default to dashboard
+      const hash = window.location.hash.substring(1) || 'dashboard';
+      showSection(hash);
+      
+      // Handle browser back/forward buttons
+      window.addEventListener('hashchange', () => {
+        const newHash = window.location.hash.substring(1) || 'dashboard';
+        showSection(newHash);
+      });
+    });
+    
+    // Show a specific section
+    async function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.portal-section').forEach(section => {
+        section.classList.add('hidden');
+      });
+      
+      // Update active nav link
+      document.querySelectorAll('.admin-sidebar a').forEach(link => {
+        link.classList.remove('active');
+      });
+      const activeLink = document.querySelector(`.admin-sidebar a[href="#${sectionId}"]`);
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+      
+      // Update page title
+      document.getElementById('page-title').textContent = pageTitles[sectionId] || sectionId;
+      
+      // Update URL hash (no page reload!)
+      window.location.hash = sectionId;
+      
+      // Show selected section
+      const targetSection = document.getElementById(sectionId);
+      if (targetSection) {
+        targetSection.classList.remove('hidden');
+        
+        // Load content if not already loaded
+        if (!sectionContent[sectionId]) {
+          await loadSectionContent(sectionId);
+        }
+      }
+    }
+    
+    // Load section content dynamically
+    async function loadSectionContent(sectionId) {
+      const targetSection = document.getElementById(sectionId);
+      if (!targetSection) return;
+      
+      try {
+        // Fetch the content from the original HTML file
+        const response = await fetch(`_${sectionId}.html`);
+        if (!response.ok) {
+          throw new Error(`Failed to load ${sectionId}`);
+        }
+        
+        const html = await response.text();
+        
+        // Parse the HTML to extract just the main content (not head, nav, etc.)
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Extract main content (everything inside body except nav)
+        const body = doc.querySelector('body');
+        const nav = body.querySelector('nav');
+        if (nav) nav.remove();
+        
+        // Get all content from body
+        const content = body.innerHTML;
+        
+        // Cache the content
+        sectionContent[sectionId] = content;
+        
+        // Insert into section
+        targetSection.innerHTML = content;
+        
+        // Extract and execute scripts
+        const scripts = doc.querySelectorAll('script');
+        scripts.forEach(script => {
+          if (script.src) {
+            // External script - only load if not already loaded
+            const existingScript = document.querySelector(`script[src="${script.src}"]`);
+            if (!existingScript) {
+              const newScript = document.createElement('script');
+              newScript.src = script.src;
+              document.body.appendChild(newScript);
+            }
+          } else if (script.textContent) {
+            // Inline script - wrap in function and execute
+            try {
+              const scriptFunction = new Function(script.textContent);
+              scriptFunction();
+            } catch (error) {
+              console.error(`Error executing script for ${sectionId}:`, error);
+            }
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error loading section:', error);
+        targetSection.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Error:</strong> Failed to load ${sectionId} content.
+            <button onclick="loadSectionContent('${sectionId}')" class="btn btn-sm btn-primary" style="margin-left: 1rem;">
+              Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+    
+    // Refresh current section
+    function refreshCurrentSection() {
+      const hash = window.location.hash.substring(1) || 'dashboard';
+      // Clear cache and reload
+      sectionContent[hash] = null;
+      loadSectionContent(hash);
+    }
+    
+    // Logout function
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>

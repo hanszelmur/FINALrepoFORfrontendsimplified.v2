@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Properties - TES Property Agent</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="navbar">
+        <a href="dashboard.html" class="navbar-brand">🏠 TES Property Agent</a>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul class="navbar-menu">
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="inquiries.html">My Inquiries</a></li>
+          <li><a href="calendar.html">Calendar</a></li>
+          <li><a href="my-properties.html">My Properties</a></li>
+          <li><a href="#" onclick="logout()" class="btn btn-danger btn-sm">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <div class="container" style="margin: 2rem auto;">
+    <h1>My Properties</h1>
+    <p class="text-muted">Properties where I have active inquiries</p>
+    
+    <!-- Properties Grid -->
+    <div id="propertiesGrid" class="grid grid-cols-3" style="margin-top: 2rem;">
+      <div class="spinner"></div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let currentUser = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuth('agent')) return;
+      
+      currentUser = getCurrentUser();
+      initNavigation('agent');
+      
+      if (initializeFirebase()) {
+        loadMyProperties();
+      } else {
+        showAlert('Unable to connect to database', 'danger');
+      }
+    });
+    
+    function loadMyProperties() {
+      const inquiriesRef = getInquiriesRef();
+      const propertiesRef = getPropertiesRef();
+      
+      Promise.all([
+        inquiriesRef.once('value'),
+        propertiesRef.once('value')
+      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
+        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
+        const allProperties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+        
+        // Get my active inquiries
+        const myInquiries = inquiries.filter(i => 
+          i.assignedAgentId === currentUser.id &&
+          ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided', 'Deposit Paid'].includes(i.status)
+        );
+        
+        // Get unique property IDs
+        const propertyIds = [...new Set(myInquiries.map(i => i.propertyId))];
+        
+        // Get properties
+        const myProperties = allProperties.filter(p => propertyIds.includes(p.id));
+        
+        // Count inquiries per property
+        const propertiesWithCount = myProperties.map(p => ({
+          ...p,
+          inquiryCount: myInquiries.filter(i => i.propertyId === p.id).length
+        }));
+        
+        displayProperties(propertiesWithCount);
+      });
+    }
+    
+    function displayProperties(properties) {
+      const grid = document.getElementById('propertiesGrid');
+      
+      if (properties.length === 0) {
+        grid.innerHTML = '<p class="text-muted" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">No properties with active inquiries</p>';
+        return;
+      }
+      
+      grid.innerHTML = properties.map(property => `
+        <div class="card">
+          <img src="${property.photos && property.photos[0] ? property.photos[0].url : 'https://via.placeholder.com/400x300?text=Property'}" 
+               alt="${property.name}" 
+               class="card-img">
+          <div class="card-body">
+            <h3 class="card-title">${property.name}</h3>
+            
+            <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+              ${formatAddress(property.address)}
+            </p>
+            
+            <p style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem;">
+              ${formatPHP(property.price)}
+            </p>
+            
+            <p class="card-text" style="margin-bottom: 1rem;">
+              ${property.propertyType} • ${property.floorArea}m²
+            </p>
+            
+            <div style="background-color: var(--gray-100); padding: 0.75rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
+              <strong>My Inquiries:</strong> ${property.inquiryCount}<br>
+              <strong>Commission:</strong> ${formatPHP(property.commission)}
+            </div>
+            
+            <a href="inquiries.html" class="btn btn-primary" style="width: 100%;">View My Inquiries</a>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function logout() {
+      clearCurrentUser();
+      window.location.href = '../shared/login.html';
+    }
+  </script>
+</body>
+</html>
