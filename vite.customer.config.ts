@@ -6,13 +6,14 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  root: './public',
+  root: '.',
+  publicDir: 'public/assets',
   server: {
     port: 3001,
-    open: '/index.html'
+    open: '/public/index.html'
   },
   build: {
-    outDir: '../dist/customer',
+    outDir: 'dist/customer',
     emptyOutDir: true,
     rollupOptions: {
       input: {
