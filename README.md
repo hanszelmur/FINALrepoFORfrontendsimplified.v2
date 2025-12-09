@@ -1,6 +1,24 @@
 # 🏠 TES Property System v2 - Real Estate Inquiry Management
 
-A complete frontend-only real estate management system with JSON file storage, comprehensive validations, and progressive web app capabilities.
+A complete real estate management system with **multi-port SPA architecture**, JSON file storage, comprehensive validations, and progressive web app capabilities.
+
+## 🎯 Multi-Port Architecture
+
+Each portal runs independently on its own port with **single-page navigation** (SPA):
+
+| Portal | Port | Purpose | URL |
+|--------|------|---------|-----|
+| **Customer** | 3001 | Browse properties, submit inquiries | `http://localhost:3001` |
+| **Admin** | 3002 | Manage properties, inquiries, agents | `http://localhost:3002` |
+| **Agent** | 3003 | View assigned inquiries, calendar | `http://localhost:3003` |
+| **Backend** | 3000 | JSON file storage API | `http://localhost:3000` |
+
+**Key Features:**
+- ✅ Each portal runs independently (can run just one portal)
+- ✅ Hash-based routing for smooth SPA navigation (no page reload)
+- ✅ Real-time data sync via backend server
+- ✅ Backend persists data to JSON files in `/data` directory
+- ✅ Run all portals simultaneously with `npm run dev:all`
 
 ## 📋 Table of Contents
 
@@ -458,41 +476,102 @@ cd FINALrepoFORfrontendsimplified.v2
 npm install
 ```
 
-### Development Mode
+### Development Mode - Multi-Port Architecture
 
-#### Option 1: Frontend Only (Uses localStorage)
+The system now runs as **three independent portals** on separate ports:
 
-```bash
-# Start Vite dev server
-npm run dev
+- **Customer Portal**: http://localhost:3001 (Browse properties, submit inquiries)
+- **Admin Portal**: http://localhost:3002 (Manage inquiries, properties, agents)
+- **Agent Portal**: http://localhost:3003 (View assigned inquiries, manage calendar)
+- **Backend Server**: http://localhost:3000 (JSON file storage API)
 
-# Open browser to http://localhost:5173
-```
-
-#### Option 2: With Backend Server
+#### Option 1: Run Individual Portal
 
 ```bash
-# Terminal 1: Start backend server
-npm run server
+# Terminal 1: Start backend server (required for data sync)
+npm run backend
 
-# Terminal 2: Start frontend dev server
-npm run dev
+# Terminal 2: Start customer portal only
+npm run dev:customer
+# Opens http://localhost:3001
 
-# Or run both together
-npm run dev:full
+# OR start admin portal only
+npm run dev:admin
+# Opens http://localhost:3002
+
+# OR start agent portal only
+npm run dev:agent
+# Opens http://localhost:3003
 ```
+
+#### Option 2: Run All Portals Simultaneously
+
+```bash
+# Run all portals + backend at once
+npm run dev:all
+```
+
+This starts:
+- Backend server on port 3000
+- Customer portal on port 3001
+- Admin portal on port 3002
+- Agent portal on port 3003
+
+**Benefits:**
+- Each portal can run independently
+- Test data sync between portals in real-time
+- Navigate within each portal without page reload (SPA with hash routing)
+- Backend syncs data across all portals via JSON files
+
+### Testing Data Sync Between Portals
+
+1. Open admin portal: http://localhost:3002
+2. Login with admin credentials
+3. Add a new property or update an inquiry
+4. Backend saves to `/data/*.json` files
+5. Open customer portal: http://localhost:3001
+6. Property appears automatically (within 30 seconds due to auto-refresh)
+7. Backend keeps running = data stays in sync
+
+**Note:** Backend server must be running for data to sync across portals. Each portal can run alone, but won't share data without the backend.
 
 ### Production Build
 
 ```bash
-# Build for production
-npm run build
+# Build all portals
+npm run build:all
 
-# Preview production build
-npm run preview
+# Or build individual portals
+npm run build:customer  # Output: dist/customer/
+npm run build:admin     # Output: dist/admin/
+npm run build:agent     # Output: dist/agent/
 
-# Deploy dist/ folder to any static host
+# Deploy each dist folder to separate subdomains or paths
 ```
+
+### SPA Navigation
+
+Each portal uses **hash-based routing** for smooth, single-page navigation:
+
+**Admin Portal:**
+- `http://localhost:3002/#dashboard` - Dashboard view
+- `http://localhost:3002/#inquiries` - Inquiries management
+- `http://localhost:3002/#properties` - Property management
+- `http://localhost:3002/#agents` - Agent management
+- `http://localhost:3002/#reports` - Reports view
+
+**Agent Portal:**
+- `http://localhost:3003/#dashboard` - Agent dashboard
+- `http://localhost:3003/#inquiries` - My inquiries
+- `http://localhost:3003/#calendar` - My calendar
+- `http://localhost:3003/#my-properties` - My properties
+
+**Features:**
+- ✅ No page reload on navigation
+- ✅ Browser back/forward buttons work
+- ✅ Bookmarkable URLs
+- ✅ Smooth fade transitions between sections
+- ✅ All existing functionality preserved
 
 ### Test Accounts
 

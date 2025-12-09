@@ -25,6 +25,10 @@ tmp/
 temp/
 *.tmp
 
+# Backup HTML files
+public/admin/_original/
+public/agent/_original/
+
 # Environment files
 .env
 .env.local
