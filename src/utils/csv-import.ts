@@ -117,7 +117,7 @@ export function downloadCSVTemplate(): void {
 /**
  * Validate property row
  */
-function validatePropertyRow(row: CSVPropertyRow, rowIndex: number): { valid: boolean; errors: string[] } {
+function validatePropertyRow(row: CSVPropertyRow): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   // Required fields
@@ -253,7 +253,7 @@ export async function parseCSVFile(file: File): Promise<CSVImportResult> {
         let nextId = Date.now();
 
         results.data.forEach((row: CSVPropertyRow, index: number) => {
-          const validation = validatePropertyRow(row, index + 2); // +2 for header and 0-index
+          const validation = validatePropertyRow(row);
 
           if (validation.valid) {
             const property = rowToProperty(row, nextId++);
@@ -353,7 +353,7 @@ export function exportPropertiesToCSV(properties: Property[]): void {
   
   link.setAttribute('href', url);
   link.setAttribute('download', `properties-export-${Date.now()}.csv`);
-  link.style.visibility = 'hidden');
+  link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

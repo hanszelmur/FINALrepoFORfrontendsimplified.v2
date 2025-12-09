@@ -13,3 +13,12 @@ export * from './expiry-checker';
 export * from './migration';
 export * from './sw-register';
 export * from './ui-helpers';
+export * from './api-client';
+export * from './search';
+export * from './bulk-operations';
+export * from './pdf-export';
+export * from './csv-import';
+export * from './analytics';
+export * from './pagination';
+export * from './auto-refresh';
+// loading-states has duplicate exports with ui-helpers, so not exported here

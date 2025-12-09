@@ -4,7 +4,7 @@
  */
 
 import type { Inquiry, InquiryStatus } from '../types';
-import { updateInquiry, saveInquiries } from './storage';
+import { updateInquiry } from './storage';
 
 export interface BulkUpdateResult {
   success: boolean;
@@ -18,8 +18,7 @@ export interface BulkUpdateResult {
  */
 export function bulkUpdateStatus(
   inquiryIds: number[],
-  newStatus: InquiryStatus,
-  inquiries: Inquiry[]
+  newStatus: InquiryStatus
 ): BulkUpdateResult {
   const result: BulkUpdateResult = {
     success: true,
