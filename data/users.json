@@ -1,0 +1,81 @@
+{
+  "_metadata": {
+    "description": "All users in the system (admin + agents)",
+    "section": "Users",
+    "recordCount": 7,
+    "lastModified": "2025-12-09T05:30:00Z",
+    "note": "System administrator manually edits this file when HR hires new agents - NO web UI for security"
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "Admin User",
+      "email": "admin@tesproperty.com",
+      "password": "admin123",
+      "role": "admin",
+      "phone": "0917-000-0000",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Maria Santos",
+      "email": "maria@tesproperty.com",
+      "password": "agent123",
+      "role": "agent",
+      "phone": "0917-111-1111",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "Pedro Garcia",
+      "email": "pedro@tesproperty.com",
+      "password": "agent123",
+      "role": "agent",
+      "phone": "0917-222-2222",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "Juan dela Cruz",
+      "email": "juan@tesproperty.com",
+      "password": "agent123",
+      "role": "agent",
+      "phone": "0917-333-3333",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "name": "Anna Reyes",
+      "email": "anna@tesproperty.com",
+      "password": "agent123",
+      "role": "agent",
+      "phone": "0917-444-4444",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "name": "Carlos Lopez",
+      "email": "carlos@tesproperty.com",
+      "password": "agent123",
+      "role": "agent",
+      "phone": "0917-555-5555",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 7,
+      "name": "Sofia Mendoza",
+      "email": "sofia@tesproperty.com",
+      "password": "agent123",
+      "role": "agent",
+      "phone": "0917-666-6666",
+      "active": true,
+      "createdAt": "2025-01-01T00:00:00Z"
+    }
+  ]
+}

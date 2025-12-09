@@ -1,0 +1,10 @@
+{
+  "_metadata": {
+    "description": "Only newly added agents (when system admin adds them)",
+    "section": "Users - New Agents",
+    "recordCount": 0,
+    "lastModified": "2025-12-09T05:30:00Z",
+    "note": "Tracks agents added after deployment. System admin manually adds entries here when HR hires new staff"
+  },
+  "data": []
+}

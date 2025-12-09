@@ -1,0 +1,10 @@
+{
+  "_metadata": {
+    "description": "All calendar events (viewings, agent unavailability)",
+    "section": "Calendar",
+    "recordCount": 0,
+    "lastModified": "2025-12-09T05:30:00Z",
+    "note": "Property viewings and agent availability tracking with conflict detection"
+  },
+  "data": []
+}
