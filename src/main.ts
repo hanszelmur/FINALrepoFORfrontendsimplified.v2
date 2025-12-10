@@ -174,6 +174,81 @@ Alpine.data('propertyBrowser', (): any => {
       }
       return 'https://via.placeholder.com/400x300?text=No+Image';
     },
+    
+    // SPA: Property Details
+    showingPropertyDetails: false,
+    selectedProperty: null as Property | null,
+    
+    showPropertyDetails(propertyId: number) {
+      this.selectedProperty = this.allProperties.find((p) => p.id === propertyId) || null;
+      this.showingPropertyDetails = true;
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    },
+    
+    closePropertyDetails() {
+      this.showingPropertyDetails = false;
+      this.selectedProperty = null;
+      document.body.style.overflow = ''; // Restore scrolling
+    },
+    
+    // SPA: Inquiry Form
+    showingInquiryForm: false,
+    inquiryForm: {
+      customerName: '',
+      customerEmail: '',
+      customerPhone: '',
+      message: '',
+    },
+    
+    showInquiryForm() {
+      this.showingInquiryForm = true;
+      this.showingPropertyDetails = false; // Close property details
+    },
+    
+    closeInquiryForm() {
+      this.showingInquiryForm = false;
+      this.inquiryForm = {
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        message: '',
+      };
+      document.body.style.overflow = ''; // Restore scrolling
+    },
+    
+    async submitInquiry() {
+      if (!this.selectedProperty) return;
+      
+      try {
+        const inquiry = {
+          id: Date.now(),
+          propertyId: this.selectedProperty.id,
+          propertyName: this.selectedProperty.name,
+          customerName: this.inquiryForm.customerName,
+          customerEmail: this.inquiryForm.customerEmail,
+          customerPhone: this.inquiryForm.customerPhone,
+          message: this.inquiryForm.message,
+          status: 'New',
+          createdAt: new Date().toISOString(),
+        };
+        
+        const response = await fetch('http://localhost:3000/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inquiry),
+        });
+        
+        if (response.ok) {
+          alert('Thank you! Your inquiry has been submitted successfully. We will contact you soon.');
+          this.closeInquiryForm();
+        } else {
+          alert('Failed to submit inquiry. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error submitting inquiry:', error);
+        alert('An error occurred. Please try again later.');
+      }
+    },
   };
 });
 
