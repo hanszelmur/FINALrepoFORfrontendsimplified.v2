@@ -8,7 +8,7 @@ import { resolve } from 'path';
 export default defineConfig({
   server: {
     port: 3004,
-    open: '/public/superadmin/index.html'
+    open: '/superadmin/index.html'
   },
   build: {
     outDir: './dist/superadmin',

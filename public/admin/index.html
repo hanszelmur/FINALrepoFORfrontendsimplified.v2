@@ -1816,6 +1816,14 @@
     // Enhanced Property Form - Variables and Functions
     let propertyPhotos = [];
     
+    // Simple alert function (can be replaced with toast system)
+    function showAlert(message, type = 'info') {
+      // For now, using console and browser alert
+      // TODO: Replace with toast notification system from common.css
+      console.log(`[${type.toUpperCase()}]`, message);
+      alert(message);
+    }
+    
     // Auto-calculate price per sqm
     function calculatePricePerSqm() {
       const price = parseFloat(document.getElementById('price').value) || 0;
@@ -1858,13 +1866,13 @@
         const maxFiles = 10 - propertyPhotos.length;
         
         if (files.length > maxFiles) {
-          alert(`You can only upload ${maxFiles} more photos (max 10 total)`);
+          showAlert(`You can only upload ${maxFiles} more photos (max 10 total)`, 'warning');
           return;
         }
         
         for (const file of files) {
           if (file.size > 2 * 1024 * 1024) {
-            alert(`File ${file.name} is too large. Maximum size is 2MB.`);
+            showAlert(`File ${file.name} is too large. Maximum size is 2MB.`, 'warning');
             continue;
           }
           
@@ -1957,7 +1965,7 @@
         
         // Validate at least one photo
         if (propertyPhotos.length === 0) {
-          alert('Please upload at least one photo');
+          showAlert('Please upload at least one photo', 'danger');
           return;
         }
         

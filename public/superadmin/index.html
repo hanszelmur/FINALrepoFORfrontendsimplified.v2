@@ -444,7 +444,7 @@
         <h1>🏢 Super Admin - HR Portal</h1>
         <p>Employment Registration & Management</p>
       </div>
-      <a href="http://localhost:3002" class="btn btn-back">← Back to Admin Portal</a>
+      <a href="#" id="backToAdminBtn" class="btn btn-back" onclick="goToAdminPortal(); return false;">← Back to Admin Portal</a>
     </div>
 
     <!-- Employment Registration Form -->
@@ -673,12 +673,27 @@
   </div>
 
   <script>
+    // Configuration - can be overridden via environment variables in production
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : '/api';
+    const ADMIN_PORTAL_URL = window.location.hostname === 'localhost'
+      ? 'http://localhost:3002'
+      : '/admin';
+    
+    // Navigate to admin portal
+    function goToAdminPortal() {
+      window.location.href = ADMIN_PORTAL_URL;
+    }
+    
     // Check access control
     function checkAccess() {
       const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       if (currentUser.role !== 'admin') {
-        alert('Access Denied: Only administrators can access this portal');
-        window.location.href = 'http://localhost:3002';
+        showToast('Access Denied: Only administrators can access this portal', 'error');
+        setTimeout(() => {
+          window.location.href = ADMIN_PORTAL_URL;
+        }, 2000);
         return false;
       }
       return true;
@@ -752,7 +767,7 @@
     // Check for duplicate email
     async function checkDuplicateEmail(email) {
       try {
-        const response = await fetch('http://localhost:3000/api/users');
+        const response = await fetch(`${API_BASE_URL}/api/users`);
         const users = await response.json();
         return users.some(user => user.email.toLowerCase() === email.toLowerCase());
       } catch (error) {
@@ -908,7 +923,7 @@
       };
 
       try {
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -965,7 +980,7 @@ Position: ${document.getElementById('modalPosition').textContent}
 
     // View all agents
     function viewAllAgents() {
-      window.location.href = 'http://localhost:3002#agents';
+      window.location.href = `${ADMIN_PORTAL_URL}#agents`;
     }
 
     // Reset form
