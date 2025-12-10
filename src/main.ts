@@ -7,6 +7,11 @@ import { runMigrations } from './utils/migration';
 import { registerServiceWorker } from './utils/sw-register';
 import type { Property } from './types';
 
+// API Configuration
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000'
+  : ''; // Use relative URLs in production
+
 // Setup global error handlers (Issue 7)
 setupGlobalErrorHandlers();
 
@@ -69,6 +74,17 @@ Alpine.data('propertyBrowser', (): any => {
       
       // Issue 16: Cleanup on page unload
       window.addEventListener('beforeunload', this.cleanup.bind(this));
+      
+      // Keyboard navigation: Close modals with Escape key
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (this.showingInquiryForm) {
+            this.closeInquiryForm();
+          } else if (this.showingPropertyDetails) {
+            this.closePropertyDetails();
+          }
+        }
+      });
     },
 
     loadProperties() {
@@ -232,7 +248,7 @@ Alpine.data('propertyBrowser', (): any => {
           createdAt: new Date().toISOString(),
         };
         
-        const response = await fetch('http://localhost:3000/api/inquiries', {
+        const response = await fetch(`${API_BASE_URL}/api/inquiries`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(inquiry),
