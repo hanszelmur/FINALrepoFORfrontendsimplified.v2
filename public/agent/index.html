@@ -406,10 +406,7 @@
     </main>
   </div>
   
-  <!-- Include Firebase and utility scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="../js/firebase-config.js"></script>
+  <!-- Include utility scripts -->
   <script src="../js/utils.js"></script>
   
   <script>
@@ -491,11 +488,7 @@
         initNavigation('agent');
       }
       
-      // Initialize Firebase
-      if (!initializeFirebase || !initializeFirebase()) {
-        showAlert('Unable to connect to database', 'danger');
-        return;
-      }
+      // REST API is ready (no initialization needed)
       
       // Load initial section based on hash or default to dashboard
       const hash = window.location.hash.substring(1) || 'dashboard';
@@ -527,12 +520,8 @@
       
       initNavigation('agent');
       
-      if (initializeFirebase()) {
-        loadDashboardData();
-        setupRealTimeListeners();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadDashboardData();
+      setupRealTimeListeners();
     });
     
     function loadDashboardData() {
@@ -541,28 +530,21 @@
       loadUserStats();
     }
     
-    function loadInquiries() {
-      const inquiriesRef = getInquiriesRef();
-      
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        myInquiries = [];
+    async function loadInquiries() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const inquiry = data[key];
-            if (inquiry.assignedAgentId === currentUser.id) {
-              myInquiries.push({ key: key, ...inquiry });
-            }
-          });
-          
-          myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
+        myInquiries = inquiries.filter(inquiry => inquiry.assignedAgentId === currentUser.id);
+        myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
         updateTasksToday();
         updateRecentActivity();
         updateActiveInquiriesCount();
-      });
+      } catch (error) {
+        console.error('Error loading inquiries:', error);
+        myInquiries = [];
+      }
     }
     
     function updateTasksToday() {
@@ -669,18 +651,11 @@
       document.getElementById('activeInquiries').textContent = active.length;
     }
     
-    function loadCalendarEvents() {
-      const calendarRef = getCalendarRef();
-      
-      calendarRef.on('value', (snapshot) => {
-        const data = snapshot.val();
+    async function loadCalendarEvents() {
+      try {
+        const calendarRes = await fetch('http://localhost:3000/api/calendar');
+        const events = await calendarRes.json();
         
-        if (!data) {
-          document.getElementById('viewingsThisWeek').textContent = '0';
-          return;
-        }
-        
-        const events = Object.values(data);
         const now = new Date();
         const weekEnd = new Date(now);
         weekEnd.setDate(weekEnd.getDate() + 7);
@@ -693,38 +668,51 @@
         );
         
         document.getElementById('viewingsThisWeek').textContent = myViewings.length;
-      });
+      } catch (error) {
+        console.error('Error loading calendar events:', error);
+        document.getElementById('viewingsThisWeek').textContent = '0';
+      }
     }
     
-    function loadUserStats() {
-      const usersRef = getUsersRef();
-      
-      usersRef.child(`user_${currentUser.id}`).on('value', (snapshot) => {
-        const data = snapshot.val();
+    async function loadUserStats() {
+      try {
+        const usersRes = await fetch('http://localhost:3000/api/users');
+        const users = await usersRes.json();
         
-        if (data) {
-          document.getElementById('propertiesSold').textContent = data.propertiesSold || 0;
-          document.getElementById('commissionEarned').textContent = formatPHP(data.totalCommission || 0);
+        const currentUserData = users.find(u => u.id === currentUser.id);
+        
+        if (currentUserData) {
+          document.getElementById('propertiesSold').textContent = currentUserData.propertiesSold || 0;
+          document.getElementById('commissionEarned').textContent = formatPHP(currentUserData.totalCommission || 0);
         }
-      });
+      } catch (error) {
+        console.error('Error loading user stats:', error);
+      }
     }
     
     function setupRealTimeListeners() {
-      const inquiriesRef = getInquiriesRef();
-      let isFirstLoad = true;
+      // Polling-based refresh instead of real-time Firebase listeners
+      let pollInterval;
       
-      inquiriesRef.on('child_added', (snapshot) => {
-        if (isFirstLoad) return;
-        
-        const inquiry = snapshot.val();
-        if (inquiry.assignedAgentId === currentUser.id) {
-          showAlert(`New inquiry assigned: ${inquiry.propertyName}`, 'info');
+      function startPolling() {
+        pollInterval = setInterval(() => {
+          if (!document.hidden && currentSection === 'dashboard') {
+            loadDashboardData();
+          }
+        }, 30000); // 30 seconds
+      }
+      
+      // Handle visibility change
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (pollInterval) clearInterval(pollInterval);
+        } else {
+          loadDashboardData();
+          startPolling();
         }
       });
       
-      setTimeout(() => {
-        isFirstLoad = false;
-      }, 1000);
+      startPolling();
     }
     
     function logout() {
@@ -741,34 +729,24 @@
       currentUser = getCurrentUser();
       initNavigation('agent');
       
-      if (initializeFirebase()) {
-        loadInquiries();
-        setupFilters();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadInquiries();
+      setupFilters();
     });
     
-    function loadInquiries() {
-      const inquiriesRef = getInquiriesRef();
-      
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        myInquiries = [];
+    async function loadInquiries() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const inquiry = data[key];
-            if (inquiry.assignedAgentId === currentUser.id) {
-              myInquiries.push({ key: key, ...inquiry });
-            }
-          });
-          
-          myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
+        myInquiries = inquiries.filter(inquiry => inquiry.assignedAgentId === currentUser.id);
+        myInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
         displayInquiries(myInquiries);
-      });
+      } catch (error) {
+        console.error('Error loading inquiries:', error);
+        myInquiries = [];
+        displayInquiries([]);
+      }
     }
     
     function displayInquiries(inquiries) {
@@ -844,7 +822,7 @@
       openModal('statusModal');
     }
     
-    function confirmStatusUpdate() {
+    async function confirmStatusUpdate() {
       const newStatus = document.getElementById('newStatus').value;
       
       if (!newStatus) {
@@ -852,27 +830,38 @@
         return;
       }
       
-      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
-      const timestamp = new Date().toISOString();
-      
-      inquiryRef.update({
-        status: newStatus,
-        statusHistory: [
-          ...currentInquiry.statusHistory,
-          {
-            status: newStatus,
-            changedBy: currentUser.name,
-            timestamp: timestamp
-          }
-        ]
-      }).then(() => {
+      try {
+        const timestamp = new Date().toISOString();
+        
+        const updatedInquiry = {
+          ...currentInquiry,
+          status: newStatus,
+          statusHistory: [
+            ...(currentInquiry.statusHistory || []),
+            {
+              status: newStatus,
+              changedBy: currentUser.name,
+              timestamp: timestamp
+            }
+          ]
+        };
+        
+        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedInquiry)
+        });
+        
         showAlert('Status updated successfully', 'success');
         closeModal('statusModal');
         currentInquiry = null;
-      }).catch(error => {
+        
+        // Reload inquiries
+        await loadInquiries();
+      } catch (error) {
         console.error('Error updating status:', error);
         showAlert('Failed to update status', 'danger');
-      });
+      }
     }
     
     function addNotes(inquiryKey) {
@@ -883,7 +872,7 @@
       openModal('notesModal');
     }
     
-    function confirmAddNotes() {
+    async function confirmAddNotes() {
       const notes = document.getElementById('newNotes').value.trim();
       
       if (!notes) {
@@ -891,22 +880,32 @@
         return;
       }
       
-      const timestamp = new Date().toISOString();
-      const existingNotes = currentInquiry.notes || '';
-      const newNotes = `${existingNotes}\n[${formatDateTime(timestamp)} - ${currentUser.name}]\n${notes}`;
-      
-      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
-      
-      inquiryRef.update({
-        notes: newNotes.trim()
-      }).then(() => {
+      try {
+        const timestamp = new Date().toISOString();
+        const existingNotes = currentInquiry.notes || '';
+        const newNotes = `${existingNotes}\n[${formatDateTime(timestamp)} - ${currentUser.name}]\n${notes}`;
+        
+        const updatedInquiry = {
+          ...currentInquiry,
+          notes: newNotes.trim()
+        };
+        
+        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedInquiry)
+        });
+        
         showAlert('Notes added successfully', 'success');
         closeModal('notesModal');
         currentInquiry = null;
-      }).catch(error => {
+        
+        // Reload inquiries
+        await loadInquiries();
+      } catch (error) {
         console.error('Error adding notes:', error);
         showAlert('Failed to add notes', 'danger');
-      });
+      }
     }
     
     function contactCustomer(inquiryKey) {
@@ -972,35 +971,24 @@
       currentUser = getCurrentUser();
       initNavigation('agent');
       
-      if (initializeFirebase()) {
-        loadEvents();
-        loadInquiries();
-        setupEventForm();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadEvents();
+      loadInquiries();
+      setupEventForm();
     });
     
-    function loadEvents() {
-      const calendarRef = getCalendarRef();
-      
-      calendarRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        const events = [];
+    async function loadEvents() {
+      try {
+        const calendarRes = await fetch('http://localhost:3000/api/calendar');
+        const allEvents = await calendarRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const event = data[key];
-            if (event.agentId === currentUser.id) {
-              events.push({ key: key, ...event });
-            }
-          });
-          
-          events.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
-        }
+        const events = allEvents.filter(event => event.agentId === currentUser.id);
+        events.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
         
         displayEvents(events);
-      });
+      } catch (error) {
+        console.error('Error loading events:', error);
+        displayEvents([]);
+      }
     }
     
     function displayEvents(events) {
@@ -1036,25 +1024,22 @@
       }).join('');
     }
     
-    function loadInquiries() {
-      const inquiriesRef = getInquiriesRef();
-      
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        myInquiries = [];
+    async function loadInquiries() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const inquiry = data[key];
-            if (inquiry.assignedAgentId === currentUser.id && 
-                ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided'].includes(inquiry.status)) {
-              myInquiries.push({ key: key, ...inquiry });
-            }
-          });
-        }
+        myInquiries = inquiries.filter(inquiry => 
+          inquiry.assignedAgentId === currentUser.id && 
+          ['Assigned', 'In Progress', 'Viewing Scheduled', 'Viewed - Interested', 'Viewed - Undecided'].includes(inquiry.status)
+        );
         
         updateInquiryDropdown();
-      });
+      } catch (error) {
+        console.error('Error loading inquiries:', error);
+        myInquiries = [];
+        updateInquiryDropdown();
+      }
     }
     
     function updateInquiryDropdown() {
@@ -1086,7 +1071,7 @@
         }
       });
       
-      document.getElementById('eventForm').addEventListener('submit', function(e) {
+      document.getElementById('eventForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const type = document.getElementById('eventType').value;
@@ -1124,18 +1109,22 @@
           event.time = 'All Day';
         }
         
-        const calendarRef = getCalendarRef();
-        const newEventKey = calendarRef.push().key;
-        
-        calendarRef.child(newEventKey).set(event)
-          .then(() => {
-            showAlert('Event added successfully', 'success');
-            closeModal('eventModal');
-          })
-          .catch(error => {
-            console.error('Error adding event:', error);
-            showAlert('Failed to add event', 'danger');
+        try {
+          await fetch('http://localhost:3000/api/calendar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(event)
           });
+          
+          showAlert('Event added successfully', 'success');
+          closeModal('eventModal');
+          
+          // Reload events
+          await loadEvents();
+        } catch (error) {
+          console.error('Error adding event:', error);
+          showAlert('Failed to add event', 'danger');
+        }
       });
     }
     
@@ -1151,23 +1140,16 @@
       currentUser = getCurrentUser();
       initNavigation('agent');
       
-      if (initializeFirebase()) {
-        loadMyProperties();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadMyProperties();
     });
     
-    function loadMyProperties() {
-      const inquiriesRef = getInquiriesRef();
-      const propertiesRef = getPropertiesRef();
-      
-      Promise.all([
-        inquiriesRef.once('value'),
-        propertiesRef.once('value')
-      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
-        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
-        const allProperties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+    async function loadMyProperties() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
+        
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const allProperties = await propertiesRes.json();
         
         // Get my active inquiries
         const myInquiries = inquiries.filter(i => 
@@ -1188,7 +1170,10 @@
         }));
         
         displayProperties(propertiesWithCount);
-      });
+      } catch (error) {
+        console.error('Error loading my properties:', error);
+        displayProperties([]);
+      }
     }
     
     function displayProperties(properties) {
