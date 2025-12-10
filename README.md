@@ -28,6 +28,7 @@ Each portal runs independently on its own port with **single-page navigation** (
 - [Data Storage Structure](#data-storage-structure)
 - [How to Add New Agent](#how-to-add-new-agent)
 - [Quick Start](#quick-start)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Known Limitations](#known-limitations)
 - [Tech Stack](#tech-stack)
@@ -586,6 +587,106 @@ Each portal uses **hash-based routing** for smooth, single-page navigation:
 - Anna Reyes: `anna@tesproperty.com` / `agent123`
 - Carlos Lopez: `carlos@tesproperty.com` / `agent123`
 - Sofia Mendoza: `sofia@tesproperty.com` / `agent123`
+
+---
+
+## 📸 Screenshots
+
+> **Note to maintainers**: Run the application locally and capture screenshots of all portals. Place them in the `/screenshots/` folder at repository root.
+
+### How to Capture Screenshots
+
+1. Start all portals:
+   ```bash
+   npm run dev:all
+   ```
+
+2. Open each portal in your browser:
+   - Customer: http://localhost:3001
+   - Admin: http://localhost:3002
+   - Agent: http://localhost:3003
+
+3. Capture screenshots of each section by navigating with hash URLs:
+   - Admin Dashboard: http://localhost:3002/#dashboard
+   - Admin Inquiries: http://localhost:3002/#inquiries
+   - Admin Properties: http://localhost:3002/#properties
+   - Admin Agents: http://localhost:3002/#agents
+   - Admin Reports: http://localhost:3002/#reports
+   - Agent Dashboard: http://localhost:3003/#dashboard
+   - Agent Inquiries: http://localhost:3003/#inquiries
+   - Agent Calendar: http://localhost:3003/#calendar
+   - Agent Properties: http://localhost:3003/#properties
+
+4. Save all screenshots to `/screenshots/` folder with descriptive names in PNG format
+
+### Customer Portal
+
+**Home Page**
+![Customer Home](screenshots/customer-home.png)
+
+**Properties Listing**
+![Customer Properties](screenshots/customer-properties.png)
+
+**Property Details**
+![Property Details](screenshots/customer-property-details.png)
+
+**Inquiry Form**
+![Inquiry Form](screenshots/customer-inquiry-form.png)
+
+**Mobile View**
+![Mobile Responsive](screenshots/customer-mobile.png)
+
+### Admin Portal
+
+**Dashboard - Overview and Stats**
+![Admin Dashboard](screenshots/admin-dashboard.png)
+
+**Inquiries Management**
+![Admin Inquiries](screenshots/admin-inquiries.png)
+
+**Properties Management**
+![Admin Properties](screenshots/admin-properties.png)
+
+**Agent Management**
+![Admin Agents](screenshots/admin-agents.png)
+
+**Reports and Analytics**
+![Admin Reports](screenshots/admin-reports.png)
+
+**Sidebar Navigation**
+![Admin Sidebar](screenshots/admin-sidebar.png)
+
+### Agent Portal
+
+**Agent Dashboard**
+![Agent Dashboard](screenshots/agent-dashboard.png)
+
+**Assigned Inquiries**
+![Agent Inquiries](screenshots/agent-inquiries.png)
+
+**Calendar and Scheduling**
+![Agent Calendar](screenshots/agent-calendar.png)
+
+**My Properties**
+![Agent Properties](screenshots/agent-properties.png)
+
+**Sidebar Navigation**
+![Agent Sidebar](screenshots/agent-sidebar.png)
+
+---
+
+### Screenshot Checklist
+
+Before considering screenshots complete, verify:
+- [ ] All screenshots are placed in `/screenshots/` folder at repository root
+- [ ] All image files use descriptive names (e.g., `admin-dashboard.png`, not `screenshot1.png`)
+- [ ] All screenshots are in PNG format
+- [ ] Screenshots show actual data (not empty states) for better demonstration
+- [ ] Mobile responsive view is included for customer portal
+- [ ] All hash-based navigation sections are captured
+- [ ] Sidebar/navigation is visible in at least one screenshot per portal
+- [ ] Images are optimized (recommended: under 500KB each, max 2MB)
+- [ ] All markdown image links in README point to correct paths
 
 ---
 
