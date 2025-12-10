@@ -98,6 +98,72 @@ A complete frontend-only real estate management system with JSON file storage, c
 
 ---
 
+## 🔥 Multi-Port SPA Conversion (Latest Update)
+
+This update transforms the application into a true multi-port Single Page Application architecture with REST API backend.
+
+### Key Changes
+
+#### Firebase → REST API Migration
+- ✅ **Removed all Firebase client SDK usage** from admin and agent portals
+- ✅ **Replaced Firebase Realtime Database calls** with REST API fetch() calls  
+- ✅ **Converted Firebase write operations** to REST API POST/PUT/DELETE
+- ✅ **Replaced real-time listeners** with polling-based refresh (Page Visibility API)
+- ✅ **All data operations** now use `/api/*` endpoints from server.js
+
+#### Customer Portal SPA Conversion
+- ✅ **Property details** converted to modal overlay (no separate page)
+- ✅ **Inquiry form** converted to modal overlay (no separate page)
+- ✅ **View Details button** now opens modal instead of navigating
+- ✅ **Inquiry submission** sends POST to `/api/inquiries`
+- ✅ **All content** in single HTML file - true SPA
+
+#### Admin Portal SPA Enhancement
+- ✅ **Hash routing** for all sections (#dashboard, #inquiries, #properties, etc.)
+- ✅ **Browser back/forward** buttons work correctly
+- ✅ **No page reloads** when navigating between sections
+- ✅ **Data operations** via REST API (properties, inquiries, users, reports)
+- ✅ **Polling refresh** every 30 seconds when page visible
+
+#### Agent Portal SPA Enhancement
+- ✅ **Hash routing** for all sections (#dashboard, #inquiries, #calendar, etc.)
+- ✅ **Calendar operations** via REST API `/api/calendar`
+- ✅ **Inquiry updates** via REST API PUT
+- ✅ **Statistics loaded** from REST API
+- ✅ **No Firebase dependencies**
+
+#### Multi-Port Architecture
+- ✅ **Customer portal** runs on port 3001 (Vite)
+- ✅ **Admin portal** runs on port 3002 (Vite)
+- ✅ **Agent portal** runs on port 3003 (Vite)
+- ✅ **Backend server** runs on port 3000 (Express)
+- ✅ **Concurrent execution** via `npm run dev:all`
+- ✅ **Independent operation** - each portal can run standalone
+
+### How It Works
+
+```
+┌──────────────┐ Port 3001
+│   Customer   │──────────┐
+│    Portal    │          │
+└──────────────┘          │
+                          ├──→ ┌────────────┐ Port 3000
+┌──────────────┐ Port 3002│    │  Backend   │
+│    Admin     │──────────┤    │  Server    │
+│    Portal    │          │    │ (Express)  │
+└──────────────┘          │    └────────────┘
+                          │          │
+┌──────────────┐ Port 3003│          ↓
+│    Agent     │──────────┘    ┌────────────┐
+│    Portal    │               │    data/   │
+└──────────────┘               │  (JSON)    │
+                               └────────────┘
+```
+
+All portals communicate with the backend via REST API calls to `http://localhost:3000/api/*`.
+
+---
+
 ## 🔄 What's Removed
 
 ### Replaced Technologies
@@ -681,6 +747,199 @@ This is a frontend-only MVP with intentional limitations:
 ### Reporting
 - **jsPDF** - PDF generation
 - **PapaParse** - CSV parsing
+
+---
+
+## ✅ QA Checklist & Testing
+
+### Pre-Flight Checks
+
+Before running the application:
+```bash
+# 1. Ensure all dependencies are installed
+npm install
+
+# 2. Verify data files exist
+ls -la data/
+
+# Expected files:
+# - properties.json
+# - inquiries.json
+# - users.json
+# - calendar.json
+# - activity-log.json
+```
+
+### Smoke Tests
+
+#### Backend Server
+```bash
+npm run backend
+
+# Expected output:
+# Server running on: http://localhost:3000
+# Status: ✓ Ready to serve requests
+```
+
+Test API endpoints:
+```bash
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/properties
+curl http://localhost:3000/api/inquiries
+```
+
+#### Customer Portal (Port 3001)
+```bash
+npm run dev:customer
+
+# Open: http://localhost:3001
+```
+
+**Tests:**
+- [ ] Property listing loads (shows Available/Reserved/Pending properties)
+- [ ] Filters work (price, type, location, status)
+- [ ] Pagination works (Previous/Next buttons)
+- [ ] Click "View Details" - modal opens with property info
+- [ ] In property details modal, click "Inquire" - inquiry form opens
+- [ ] Fill inquiry form and submit - success message appears
+- [ ] Check browser console - no errors
+
+#### Admin Portal (Port 3002)
+```bash
+npm run dev:admin
+
+# Open: http://localhost:3002
+```
+
+**Login:**
+- Username: `admin@tesproperty.com`
+- Password: `admin123`
+
+**Tests:**
+- [ ] Dashboard loads - shows statistics cards
+- [ ] Click "Inquiries" in sidebar - inquiries table loads
+- [ ] Click "Properties" - properties table loads
+- [ ] Click "Agents" - agents list loads
+- [ ] Click "Reports" - reports section loads
+- [ ] Add new property - saves successfully
+- [ ] Assign inquiry to agent - updates successfully
+- [ ] Check browser console - no errors
+- [ ] Hash navigation works (#dashboard, #inquiries, etc.)
+- [ ] Browser back/forward buttons work
+
+#### Agent Portal (Port 3003)
+```bash
+npm run dev:agent
+
+# Open: http://localhost:3003
+```
+
+**Login:**
+- Username: `agent1@tesproperty.com` 
+- Password: `agent123`
+
+**Tests:**
+- [ ] Dashboard loads - shows assigned inquiries count
+- [ ] Click "My Inquiries" - my inquiries table loads
+- [ ] Update inquiry status - saves successfully
+- [ ] Add notes to inquiry - saves successfully
+- [ ] Click "Calendar" - calendar events load
+- [ ] Add new viewing event - saves successfully
+- [ ] Click "My Properties" - properties with inquiries load
+- [ ] Hash navigation works
+- [ ] Browser back/forward buttons work
+
+#### All Portals Together
+```bash
+npm run dev:all
+
+# This starts all 4 servers simultaneously
+```
+
+**Tests:**
+- [ ] All portals accessible at their respective URLs
+- [ ] Add property in admin - appears in customer portal (within 30s)
+- [ ] Submit inquiry in customer - appears in admin portal
+- [ ] Assign inquiry in admin - appears in agent portal
+- [ ] Data syncs across all portals
+
+### Data Sync Verification
+
+1. Open Admin portal (3002) and Customer portal (3001) side by side
+2. In Admin: Add a new property with status "Available"
+3. In Customer: Wait 30 seconds (auto-refresh) or manually refresh
+4. Verify: New property appears in Customer portal listing
+5. In Customer: Submit an inquiry for a property
+6. In Admin: Refresh and go to Inquiries section
+7. Verify: New inquiry appears with status "New"
+
+### Mobile Responsiveness
+
+- [ ] Resize browser to mobile width (375px)
+- [ ] All buttons are touch-friendly (44x44px minimum)
+- [ ] Navigation menu works on mobile
+- [ ] Forms are usable on mobile
+- [ ] Modals/sections fit mobile screen
+
+### Console & Network Checks
+
+**Browser Console:**
+- [ ] No uncaught exceptions
+- [ ] No 404 errors for assets
+- [ ] Only expected warnings (if any)
+
+**Network Tab:**
+- [ ] API calls go to `http://localhost:3000/api/*`
+- [ ] No Firebase URLs appear
+- [ ] Successful responses (200, 201) for CRUD operations
+
+---
+
+## 📸 Screenshots
+
+### Customer Portal
+
+#### Property Listing Page
+> Screenshot showing property grid with filters, search, and pagination
+
+#### Property Details Modal
+> Screenshot showing property details overlay with full information
+
+#### Inquiry Form Modal
+> Screenshot showing inquiry submission form
+
+### Admin Portal
+
+#### Dashboard
+> Screenshot showing admin dashboard with statistics cards
+
+#### Inquiries Management
+> Screenshot showing inquiries table with filters and bulk actions
+
+#### Properties Management  
+> Screenshot showing properties CRUD interface
+
+#### Agent Assignment
+> Screenshot showing inquiry assignment to agent
+
+#### Reports Section
+> Screenshot showing reports generation with date filters
+
+### Agent Portal
+
+#### Agent Dashboard
+> Screenshot showing agent dashboard with tasks
+
+#### My Inquiries
+> Screenshot showing agent's assigned inquiries
+
+#### Calendar View
+> Screenshot showing agent's calendar with viewing schedule
+
+#### Property Details from Agent View
+> Screenshot showing property information in agent portal
+
+> **Note**: Screenshots will be added after running `npm run dev:all` and capturing each portal in action. Screenshots should be hosted externally or added to a `/docs/images/` directory (not in `/screenshots/` at project root).
 
 ---
 
