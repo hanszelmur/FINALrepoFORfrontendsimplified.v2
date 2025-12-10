@@ -617,7 +617,7 @@ Each portal uses **hash-based routing** for smooth, single-page navigation:
    - Agent Calendar: http://localhost:3003/#calendar
    - Agent Properties: http://localhost:3003/#properties
 
-4. Save all screenshots to `/screenshots/` folder with descriptive names
+4. Save all screenshots to `/screenshots/` folder with descriptive names in PNG format
 
 ### Customer Portal
 
@@ -680,11 +680,12 @@ Each portal uses **hash-based routing** for smooth, single-page navigation:
 Before considering screenshots complete, verify:
 - [ ] All screenshots are placed in `/screenshots/` folder at repository root
 - [ ] All image files use descriptive names (e.g., `admin-dashboard.png`, not `screenshot1.png`)
+- [ ] All screenshots are in PNG format
 - [ ] Screenshots show actual data (not empty states) for better demonstration
 - [ ] Mobile responsive view is included for customer portal
 - [ ] All hash-based navigation sections are captured
 - [ ] Sidebar/navigation is visible in at least one screenshot per portal
-- [ ] Images are reasonably sized (optimized, not 10MB each)
+- [ ] Images are optimized (recommended: under 500KB each, max 2MB)
 - [ ] All markdown image links in README point to correct paths
 
 ---
