@@ -1224,7 +1224,7 @@
       openModal('assignModal');
     }
     
-    function confirmAssign() {
+    async function confirmAssign() {
       const agentId = parseInt(document.getElementById('assignAgent').value);
       
       if (!agentId) {
@@ -1238,36 +1238,41 @@
         return;
       }
       
-      // Update inquiry
-      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
-      const timestamp = new Date().toISOString();
-      
-      inquiryRef.update({
-        status: 'Assigned',
-        assignedAgentId: agentId,
-        assignedAgentName: agent.name,
-        statusHistory: [
-          ...currentInquiry.statusHistory,
-          {
-            status: 'Assigned',
-            changedBy: 'admin',
-            timestamp: timestamp
-          }
-        ]
-      }).then(() => {
-        // Update agent's active inquiry count
-        const userRef = database.ref(`users/user_${agentId}`);
-        userRef.update({
-          activeInquiries: (agent.activeInquiries || 0) + 1
+      try {
+        // Update inquiry
+        const timestamp = new Date().toISOString();
+        const updatedInquiry = {
+          ...currentInquiry,
+          status: 'Assigned',
+          assignedAgentId: agentId,
+          assignedAgentName: agent.name,
+          statusHistory: [
+            ...(currentInquiry.statusHistory || []),
+            {
+              status: 'Assigned',
+              changedBy: 'admin',
+              timestamp: timestamp
+            }
+          ]
+        };
+        
+        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedInquiry)
         });
         
+        // Note: Agent active inquiry count will be calculated on server side or on next load
         showAlert('Inquiry assigned successfully', 'success');
         closeModal('assignModal');
         currentInquiry = null;
-      }).catch(error => {
+        
+        // Reload inquiries
+        await loadInquiries();
+      } catch (error) {
         console.error('Error assigning inquiry:', error);
         showAlert('Failed to assign inquiry', 'danger');
-      });
+      }
     }
     
     function openReassignModal(inquiryKey) {
@@ -1286,7 +1291,7 @@
       openModal('reassignModal');
     }
     
-    function confirmReassign() {
+    async function confirmReassign() {
       const newAgentId = parseInt(document.getElementById('reassignAgent').value);
       const reason = document.getElementById('reassignReason').value.trim();
       
@@ -1308,45 +1313,46 @@
         return;
       }
       
-      // Update inquiry
-      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
-      const timestamp = new Date().toISOString();
-      
-      // Sanitize reason text
-      const sanitizedReason = reason.replace(/[<>]/g, '');
-      
-      inquiryRef.update({
-        assignedAgentId: newAgentId,
-        assignedAgentName: newAgent.name,
-        notes: `${currentInquiry.notes}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${sanitizedReason}`,
-        statusHistory: [
-          ...currentInquiry.statusHistory,
-          {
-            status: 'Reassigned',
-            changedBy: 'admin',
-            timestamp: timestamp,
-            note: `Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${reason}`
-          }
-        ]
-      }).then(() => {
-        // Update agent counts
-        if (oldAgent) {
-          database.ref(`users/user_${oldAgent.id}`).update({
-            activeInquiries: Math.max(0, (oldAgent.activeInquiries || 0) - 1)
-          });
-        }
+      try {
+        // Update inquiry
+        const timestamp = new Date().toISOString();
         
-        database.ref(`users/user_${newAgentId}`).update({
-          activeInquiries: (newAgent.activeInquiries || 0) + 1
+        // Sanitize reason text
+        const sanitizedReason = reason.replace(/[<>]/g, '');
+        
+        const updatedInquiry = {
+          ...currentInquiry,
+          assignedAgentId: newAgentId,
+          assignedAgentName: newAgent.name,
+          notes: `${currentInquiry.notes || ''}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent?.name || 'Unknown'} to ${newAgent.name}. Reason: ${sanitizedReason}`,
+          statusHistory: [
+            ...(currentInquiry.statusHistory || []),
+            {
+              status: 'Reassigned',
+              changedBy: 'admin',
+              timestamp: timestamp,
+              note: `Reassigned from ${oldAgent?.name || 'Unknown'} to ${newAgent.name}. Reason: ${reason}`
+            }
+          ]
+        };
+        
+        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedInquiry)
         });
         
+        // Note: Agent counts will be calculated on server side or on next load
         showAlert('Inquiry reassigned successfully', 'success');
         closeModal('reassignModal');
         currentInquiry = null;
-      }).catch(error => {
+        
+        // Reload inquiries
+        await loadInquiries();
+      } catch (error) {
         console.error('Error reassigning inquiry:', error);
         showAlert('Failed to reassign inquiry', 'danger');
-      });
+      }
     }
     
     function viewInquiry(inquiryKey) {
@@ -1421,32 +1427,24 @@
       
       initNavigation('admin');
       
-      if (initializeFirebase()) {
-        loadProperties();
-        setupFilters();
-        setupForm();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadProperties();
+      setupFilters();
+      setupForm();
     });
     
-    function loadProperties() {
-      const propertiesRef = getPropertiesRef();
-      
-      propertiesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        allProperties = [];
+    async function loadProperties() {
+      try {
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        allProperties = await propertiesRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            allProperties.push({ key: key, ...data[key] });
-          });
-          
-          allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
+        allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
         displayProperties(allProperties);
-      });
+      } catch (error) {
+        console.error('Error loading properties:', error);
+        allProperties = [];
+        displayProperties([]);
+      }
     }
     
     function displayProperties(properties) {
@@ -1594,7 +1592,7 @@
     }
     
     function setupForm() {
-      document.getElementById('propertyForm').addEventListener('submit', function(e) {
+      document.getElementById('propertyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const formData = {
@@ -1616,49 +1614,56 @@
           description: document.getElementById('description').value.trim()
         };
         
-        if (currentProperty) {
-          // Update existing property
-          const propertyRef = database.ref(`properties/${currentProperty.key}`);
-          propertyRef.update(formData)
-            .then(() => {
-              showAlert('Property updated successfully', 'success');
-              closeModal('propertyModal');
-              currentProperty = null;
-            })
-            .catch(error => {
-              console.error('Error updating property:', error);
-              showAlert('Failed to update property', 'danger');
+        try {
+          if (currentProperty) {
+            // Update existing property
+            const updatedProperty = {
+              ...currentProperty,
+              ...formData
+            };
+            
+            await fetch(`http://localhost:3000/api/properties/${currentProperty.id}`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(updatedProperty)
             });
-        } else {
-          // Add new property
-          const propertiesRef = getPropertiesRef();
-          const newPropertyKey = propertiesRef.push().key;
-          
-          const property = {
-            id: Date.now(),
-            ...formData,
-            status: 'Available',
-            photos: [
-              { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
-            ],
-            createdAt: new Date().toISOString()
-          };
-          
-          propertiesRef.child(newPropertyKey).set(property)
-            .then(() => {
-              showAlert('Property added successfully', 'success');
-              closeModal('propertyModal');
-            })
-            .catch(error => {
-              console.error('Error adding property:', error);
-              showAlert('Failed to add property', 'danger');
+            
+            showAlert('Property updated successfully', 'success');
+            closeModal('propertyModal');
+            currentProperty = null;
+          } else {
+            // Add new property
+            const property = {
+              id: Date.now(),
+              ...formData,
+              status: 'Available',
+              photos: [
+                { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
+              ],
+              createdAt: new Date().toISOString()
+            };
+            
+            await fetch('http://localhost:3000/api/properties', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(property)
             });
+            
+            showAlert('Property added successfully', 'success');
+            closeModal('propertyModal');
+          }
+          
+          // Reload properties
+          await loadProperties();
+        } catch (error) {
+          console.error('Error saving property:', error);
+          showAlert('Failed to save property', 'danger');
         }
       });
     }
     
-    function changeStatus(propertyKey) {
-      const property = allProperties.find(p => p.key === propertyKey);
+    async function changeStatus(propertyKey) {
+      const property = allProperties.find(p => p.id === propertyKey || p.key === propertyKey);
       if (!property) return;
       
       const newStatus = prompt(`Current status: ${property.status}\n\nEnter new status:\n- Available\n- Reserved\n- Pending\n- Sold\n- Withdrawn`, property.status);
@@ -1671,25 +1676,31 @@
         return;
       }
       
-      const propertyRef = database.ref(`properties/${propertyKey}`);
-      const updates = { status: newStatus };
-      
-      if (newStatus === 'Sold') {
-        const finalPrice = prompt('Enter final sale price:', property.price);
-        if (finalPrice) {
-          updates.finalSalePrice = parseFloat(finalPrice);
-          updates.soldDate = new Date().toISOString();
+      try {
+        const updates = { ...property, status: newStatus };
+        
+        if (newStatus === 'Sold') {
+          const finalPrice = prompt('Enter final sale price:', property.price);
+          if (finalPrice) {
+            updates.finalSalePrice = parseFloat(finalPrice);
+            updates.soldDate = new Date().toISOString();
+          }
         }
-      }
-      
-      propertyRef.update(updates)
-        .then(() => {
-          showAlert('Property status updated successfully', 'success');
-        })
-        .catch(error => {
-          console.error('Error updating status:', error);
-          showAlert('Failed to update status', 'danger');
+        
+        await fetch(`http://localhost:3000/api/properties/${property.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updates)
         });
+        
+        showAlert('Property status updated successfully', 'success');
+        
+        // Reload properties
+        await loadProperties();
+      } catch (error) {
+        console.error('Error updating status:', error);
+        showAlert('Failed to update status', 'danger');
+      }
     }
     
     function logout() {
@@ -1704,33 +1715,23 @@
       
       initNavigation('admin');
       
-      if (initializeFirebase()) {
-        loadAgents();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadAgents();
     });
     
-    function loadAgents() {
-      const usersRef = getUsersRef();
-      
-      usersRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        allAgents = [];
+    async function loadAgents() {
+      try {
+        const usersRes = await fetch('http://localhost:3000/api/users');
+        const users = await usersRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const user = data[key];
-            if (user.role === 'agent') {
-              allAgents.push({ key: key, ...user });
-            }
-          });
-          
-          allAgents.sort((a, b) => (b.totalCommission || 0) - (a.totalCommission || 0));
-        }
+        allAgents = users.filter(u => u.role === 'agent');
+        allAgents.sort((a, b) => (b.totalCommission || 0) - (a.totalCommission || 0));
         
         displayAgents();
-      });
+      } catch (error) {
+        console.error('Error loading agents:', error);
+        allAgents = [];
+        displayAgents();
+      }
     }
     
     function displayAgents() {
@@ -1865,7 +1866,7 @@
       }
     }
     
-    function generateReports() {
+    async function generateReports() {
       const range = document.getElementById('dateRange').value;
       
       if (range === 'custom') {
@@ -1881,15 +1882,12 @@
         endDate = new Date(end);
       }
       
-      const inquiriesRef = getInquiriesRef();
-      const propertiesRef = getPropertiesRef();
-      
-      Promise.all([
-        inquiriesRef.once('value'),
-        propertiesRef.once('value')
-      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
-        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
-        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
+        
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const properties = await propertiesRes.json();
         
         const filtered = inquiries.filter(i => {
           const date = new Date(i.createdAt);
@@ -1954,24 +1952,24 @@
         `;
         
         showAlert('Reports generated successfully', 'success');
-      });
+      } catch (error) {
+        console.error('Error generating reports:', error);
+        showAlert('Failed to generate reports', 'danger');
+      }
     }
     
-    function exportReport(type) {
+    async function exportReport(type) {
       updateDateRange();
       
-      const inquiriesRef = getInquiriesRef();
-      const propertiesRef = getPropertiesRef();
-      const usersRef = getUsersRef();
-      
-      Promise.all([
-        inquiriesRef.once('value'),
-        propertiesRef.once('value'),
-        usersRef.once('value')
-      ]).then(([inquiriesSnapshot, propertiesSnapshot, usersSnapshot]) => {
-        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
-        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
-        const users = usersSnapshot.val() ? Object.values(usersSnapshot.val()) : [];
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
+        
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const properties = await propertiesRes.json();
+        
+        const usersRes = await fetch('http://localhost:3000/api/users');
+        const users = await usersRes.json();
         
         let data = [];
         let filename = '';
