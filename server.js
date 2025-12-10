@@ -115,10 +115,27 @@ app.post('/api/properties', async (req, res) => {
     const properties = await readJSONFile('properties.json');
     const newProperties = await readJSONFile('new-properties.json');
     
+    // Generate property code if not provided
+    const year = new Date().getFullYear();
+    const propertyCode = req.body.propertyCode || `PROP-${year}-${String(Date.now()).slice(-4)}`;
+    
+    // Calculate price per sqm if not provided
+    const pricePerSqm = req.body.pricePerSqm || 
+      (req.body.price && req.body.squareMeters ? Math.round(req.body.price / req.body.squareMeters) : 0);
+    
+    const now = new Date().toISOString();
     const newProperty = {
       ...req.body,
       id: Date.now(),
-      createdAt: new Date().toISOString(),
+      propertyCode,
+      pricePerSqm,
+      createdAt: now,
+      // Ensure metadata exists
+      metadata: {
+        ...req.body.metadata,
+        dateAdded: req.body.metadata?.dateAdded || now,
+        lastUpdated: now
+      }
     };
     
     properties.data.push(newProperty);
@@ -131,11 +148,21 @@ app.post('/api/properties', async (req, res) => {
       'ADD_PROPERTY',
       'Properties',
       'Property added via admin portal',
-      { propertyName: newProperty.name, price: newProperty.price }
+      { 
+        propertyCode: newProperty.propertyCode,
+        propertyName: newProperty.name || newProperty.title,
+        price: newProperty.price,
+        addedBy: newProperty.metadata?.addedBy
+      }
     );
     
-    res.status(201).json(newProperty);
+    res.status(201).json({
+      success: true,
+      message: 'Property created successfully',
+      property: newProperty
+    });
   } catch (error) {
+    console.error('Error adding property:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -151,7 +178,26 @@ app.put('/api/properties/:id', async (req, res) => {
     }
     
     const oldProperty = properties.data[index];
-    properties.data[index] = { ...properties.data[index], ...req.body };
+    const now = new Date().toISOString();
+    
+    // Preserve original metadata.dateAdded and update lastUpdated
+    const updatedProperty = {
+      ...properties.data[index],
+      ...req.body,
+      metadata: {
+        ...req.body.metadata,
+        dateAdded: oldProperty.metadata?.dateAdded || req.body.metadata?.dateAdded || now,
+        lastUpdated: now,
+        updatedBy: req.body.metadata?.updatedBy || 'Admin User'
+      }
+    };
+    
+    // Recalculate price per sqm if price or sqm changed
+    if (updatedProperty.price && updatedProperty.squareMeters) {
+      updatedProperty.pricePerSqm = Math.round(updatedProperty.price / updatedProperty.squareMeters);
+    }
+    
+    properties.data[index] = updatedProperty;
     
     await writeJSONFile('properties.json', properties);
     
@@ -160,15 +206,22 @@ app.put('/api/properties/:id', async (req, res) => {
       'Properties',
       'Property updated via admin portal',
       { 
-        propertyName: properties.data[index].name,
+        propertyCode: updatedProperty.propertyCode,
+        propertyName: updatedProperty.name || updatedProperty.title,
         changes: Object.keys(req.body),
         oldStatus: oldProperty.status,
-        newStatus: properties.data[index].status,
+        newStatus: updatedProperty.status,
+        updatedBy: updatedProperty.metadata?.updatedBy
       }
     );
     
-    res.json(properties.data[index]);
+    res.json({
+      success: true,
+      message: 'Property updated successfully',
+      property: updatedProperty
+    });
   } catch (error) {
+    console.error('Error updating property:', error);
     res.status(500).json({ error: error.message });
   }
 });
