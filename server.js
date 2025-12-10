@@ -305,6 +305,68 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// Create new user (agent)
+app.post('/api/users', async (req, res) => {
+  try {
+    const users = await readJSONFile('users.json');
+    const newAgents = await readJSONFile('new-agents.json');
+    
+    // Validate duplicate email
+    const emailExists = users.data.some(
+      (u) => u.email.toLowerCase() === req.body.email.toLowerCase()
+    );
+    
+    if (emailExists) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    
+    // Generate new ID (max + 1)
+    const maxId = users.data.length > 0 
+      ? Math.max(...users.data.map(u => u.id || 0))
+      : 0;
+    
+    const newUser = {
+      ...req.body,
+      id: maxId + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Add to both files
+    users.data.push(newUser);
+    newAgents.data.push(newUser);
+    
+    // Save to JSON files
+    await writeJSONFile('users.json', users);
+    await writeJSONFile('new-agents.json', newAgents);
+    
+    // Log activity
+    await logActivity(
+      'ADD_AGENT',
+      'Users',
+      'New agent registered via Super Admin portal',
+      {
+        agentName: newUser.name,
+        email: newUser.email,
+        employeeId: newUser.employmentInfo?.employeeId,
+        position: newUser.employmentInfo?.position,
+        addedBy: newUser.employmentInfo?.addedBy
+      }
+    );
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = newUser;
+    res.status(201).json({
+      success: true,
+      message: 'Agent created successfully',
+      user: userWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Login
 app.post('/api/login', async (req, res) => {
   try {
