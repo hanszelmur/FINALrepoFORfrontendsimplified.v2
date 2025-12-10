@@ -2,9 +2,49 @@
   "_metadata": {
     "description": "All properties in the system (initial + newly added)",
     "section": "Properties",
-    "recordCount": 10,
-    "lastModified": "2025-12-09T05:30:00Z",
+    "recordCount": 1,
+    "lastModified": "2025-12-10T16:08:53.921Z",
     "note": "This file contains all properties including those added via admin portal"
   },
-  "data": []
+  "data": [
+    {
+      "propertyCode": "PROP-2025-0001",
+      "name": "Test Modern House",
+      "title": "Test Modern House",
+      "description": "A beautiful test property",
+      "price": 5000000,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "squareMeters": 150,
+      "floorArea": 120,
+      "propertyType": "House",
+      "status": "Available",
+      "address": {
+        "street": "Test Street",
+        "barangay": "Test Brgy",
+        "city": "Quezon City",
+        "province": "Metro Manila",
+        "zip": "1100"
+      },
+      "features": [
+        "Swimming Pool",
+        "Garden"
+      ],
+      "reservationFee": 50000,
+      "commission": 100000,
+      "photos": [
+        "test-photo-base64"
+      ],
+      "metadata": {
+        "addedBy": "Admin User",
+        "addedByEmail": "admin@tesproperty.com",
+        "source": "Direct Owner",
+        "dateAdded": "2025-12-10T16:08:53.921Z",
+        "lastUpdated": "2025-12-10T16:08:53.921Z"
+      },
+      "id": 1765382933921,
+      "pricePerSqm": 33333,
+      "createdAt": "2025-12-10T16:08:53.921Z"
+    }
+  ]
 }
