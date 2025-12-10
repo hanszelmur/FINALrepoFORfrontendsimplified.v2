@@ -628,10 +628,7 @@
     </main>
   </div>
   
-  <!-- Include Firebase and utility scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="../js/firebase-config.js"></script>
+  <!-- Include utility scripts -->
   <script src="../js/utils.js"></script>
   
   <script>
@@ -718,11 +715,7 @@
         initNavigation('admin');
       }
       
-      // Initialize Firebase
-      if (!initializeFirebase || !initializeFirebase()) {
-        showAlert('Unable to connect to database', 'danger');
-        return;
-      }
+      // REST API is ready (no initialization needed)
       
       // Load initial section based on hash or default to dashboard
       const hash = window.location.hash.substring(1) || 'dashboard';
@@ -753,12 +746,8 @@
       
       initNavigation('admin');
       
-      if (initializeFirebase()) {
-        loadDashboardData();
-        setupRealTimeListeners();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadDashboardData();
+      setupRealTimeListeners();
     });
     
     function loadDashboardData() {
@@ -768,16 +757,12 @@
       loadRecentActivity();
     }
     
-    function loadStatistics() {
-      const inquiriesRef = getInquiriesRef();
-      const propertiesRef = getPropertiesRef();
-      
-      // Load inquiries
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
+    async function loadStatistics() {
+      try {
+        // Load inquiries
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
         
-        const inquiries = Object.values(data);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
@@ -809,15 +794,12 @@
         } else {
           document.getElementById('unassignedAlert').style.display = 'none';
         }
-      });
-      
-      // Load properties
-      propertiesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
         
-        const properties = Object.values(data);
-        const active = properties.filter(p => 
+        // Load properties
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const properties = await propertiesRes.json();
+        
+        const activeProps = properties.filter(p => 
           ['Available', 'Reserved', 'Pending'].includes(p.status)
         ).length;
         
@@ -830,24 +812,23 @@
           .filter(p => p.status === 'Sold' && p.soldDate && new Date(p.soldDate) >= thisMonth)
           .reduce((sum, p) => sum + (p.finalSalePrice || p.price), 0);
         
-        document.getElementById('activeProperties').textContent = active;
+        document.getElementById('activeProperties').textContent = activeProps;
         document.getElementById('salesThisMonth').textContent = formatPHP(salesThisMonth);
-      });
+      } catch (error) {
+        console.error('Error loading statistics:', error);
+      }
     }
     
-    function loadActionItems() {
-      const inquiriesRef = getInquiriesRef();
-      
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
+    async function loadActionItems() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
         const container = document.getElementById('actionItems');
         
-        if (!data) {
+        if (!inquiries || inquiries.length === 0) {
           container.innerHTML = '<p class="text-muted">No pending actions</p>';
           return;
         }
-        
-        const inquiries = Object.values(data);
         
         // Unassigned inquiries
         const unassigned = inquiries.filter(i => i.status === 'New' && !i.assignedAgentId);
@@ -884,22 +865,23 @@
         } else {
           container.innerHTML = items.join('');
         }
-      });
+      } catch (error) {
+        console.error('Error loading action items:', error);
+        document.getElementById('actionItems').innerHTML = '<p class="text-danger">Error loading action items</p>';
+      }
     }
     
-    function loadExpiringReservations() {
-      const propertiesRef = getPropertiesRef();
-      
-      propertiesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
+    async function loadExpiringReservations() {
+      try {
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const properties = await propertiesRes.json();
         const container = document.getElementById('expiringReservations');
         
-        if (!data) {
+        if (!properties || properties.length === 0) {
           container.innerHTML = '<p class="text-muted">No reservations expiring soon</p>';
           return;
         }
         
-        const properties = Object.values(data);
         const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
         
         const expiring = properties.filter(p => 
@@ -923,22 +905,21 @@
             <a href="properties.html?id=${p.id}" class="btn btn-sm btn-outline" style="float: right;">View</a>
           </div>
         `).join('');
-      });
+      } catch (error) {
+        console.error('Error loading expiring reservations:', error);
+      }
     }
     
-    function loadRecentActivity() {
-      const inquiriesRef = getInquiriesRef();
-      
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
+    async function loadRecentActivity() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
         const container = document.getElementById('recentActivity');
         
-        if (!data) {
+        if (!inquiries || inquiries.length === 0) {
           container.innerHTML = '<p class="text-muted">No recent activity</p>';
           return;
         }
-        
-        const inquiries = Object.values(data);
         
         // Get all status changes
         const activities = [];
@@ -993,30 +974,35 @@
             </table>
           </div>
         `;
-      });
+      } catch (error) {
+        console.error('Error loading recent activity:', error);
+      }
     }
     
     function setupRealTimeListeners() {
-      // Listen for new inquiries
-      const inquiriesRef = getInquiriesRef();
-      let isFirstLoad = true;
+      // Polling-based refresh instead of real-time Firebase listeners
+      // Poll every 30 seconds when page is visible
+      let pollInterval;
       
-      inquiriesRef.on('child_added', (snapshot) => {
-        if (isFirstLoad) return; // Skip initial load
-        
-        const inquiry = snapshot.val();
-        showAlert(`New inquiry from ${inquiry.customerName} for ${inquiry.propertyName}`, 'info');
+      function startPolling() {
+        pollInterval = setInterval(() => {
+          if (!document.hidden && currentSection === 'dashboard') {
+            loadDashboardData();
+          }
+        }, 30000); // 30 seconds
+      }
+      
+      // Handle visibility change
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (pollInterval) clearInterval(pollInterval);
+        } else {
+          loadDashboardData();
+          startPolling();
+        }
       });
       
-      // Mark first load complete after a short delay
-      setTimeout(() => {
-        isFirstLoad = false;
-      }, 1000);
-    }
-    
-    function logout() {
-      clearCurrentUser();
-      window.location.href = '../shared/login.html';
+      startPolling();
     }
     
     // ===== INQUIRIES SECTION SCRIPTS =====
@@ -1029,78 +1015,81 @@
       
       initNavigation('admin');
       
-      if (initializeFirebase()) {
-        loadAgents();
-        loadProperties();
-        loadInquiries();
-        setupFilters();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadAgents();
+      loadProperties();
+      loadInquiries();
+      setupFilters();
     });
     
-    function loadAgents() {
-      const usersRef = getUsersRef();
-      
-      usersRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
+    async function loadAgents() {
+      try {
+        const usersRes = await fetch('http://localhost:3000/api/users');
+        const users = await usersRes.json();
         
-        allAgents = Object.values(data).filter(u => u.role === 'agent');
+        allAgents = users.filter(u => u.role === 'agent');
         
         // Populate agent filters and dropdowns
         const filterAgent = document.getElementById('filterAgent');
         const assignAgent = document.getElementById('assignAgent');
         const reassignAgent = document.getElementById('reassignAgent');
         
-        filterAgent.innerHTML = '<option value="">All Agents</option>';
-        assignAgent.innerHTML = '<option value="">Select an agent</option>';
-        reassignAgent.innerHTML = '<option value="">Select an agent</option>';
-        
-        allAgents.forEach(agent => {
-          filterAgent.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
-          assignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
-          reassignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
-        });
-      });
-    }
-    
-    function loadProperties() {
-      const propertiesRef = getPropertiesRef();
-      
-      propertiesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        
-        allProperties = Object.values(data);
-        
-        const filterProperty = document.getElementById('filterProperty');
-        filterProperty.innerHTML = '<option value="">All Properties</option>';
-        
-        allProperties.forEach(property => {
-          filterProperty.innerHTML += `<option value="${property.id}">${property.name}</option>`;
-        });
-      });
-    }
-    
-    function loadInquiries() {
-      const inquiriesRef = getInquiriesRef();
-      
-      inquiriesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        allInquiries = [];
-        
-        if (data) {
-          Object.keys(data).forEach(key => {
-            allInquiries.push({ key: key, ...data[key] });
+        if (filterAgent) {
+          filterAgent.innerHTML = '<option value="">All Agents</option>';
+          allAgents.forEach(agent => {
+            filterAgent.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
           });
-          
-          // Sort by date (newest first)
-          allInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
         
+        if (assignAgent) {
+          assignAgent.innerHTML = '<option value="">Select an agent</option>';
+          allAgents.forEach(agent => {
+            assignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
+          });
+        }
+        
+        if (reassignAgent) {
+          reassignAgent.innerHTML = '<option value="">Select an agent</option>';
+          allAgents.forEach(agent => {
+            reassignAgent.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.activeInquiries || 0} active)</option>`;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading agents:', error);
+      }
+    }
+    
+    async function loadProperties() {
+      try {
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        allProperties = await propertiesRes.json();
+        
+        const filterProperty = document.getElementById('filterProperty');
+        if (filterProperty) {
+          filterProperty.innerHTML = '<option value="">All Properties</option>';
+          
+          allProperties.forEach(property => {
+            filterProperty.innerHTML += `<option value="${property.id}">${property.name}</option>`;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading properties:', error);
+      }
+    }
+    
+    async function loadInquiries() {
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        allInquiries = await inquiriesRes.json();
+        
+        // Sort by date (newest first)
+        allInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
         displayInquiries(allInquiries);
-      });
+      } catch (error) {
+        console.error('Error loading inquiries:', error);
+        allInquiries = [];
+        displayInquiries([]);
+      }
     }
     
     function displayInquiries(inquiries) {
@@ -1235,7 +1224,7 @@
       openModal('assignModal');
     }
     
-    function confirmAssign() {
+    async function confirmAssign() {
       const agentId = parseInt(document.getElementById('assignAgent').value);
       
       if (!agentId) {
@@ -1249,36 +1238,41 @@
         return;
       }
       
-      // Update inquiry
-      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
-      const timestamp = new Date().toISOString();
-      
-      inquiryRef.update({
-        status: 'Assigned',
-        assignedAgentId: agentId,
-        assignedAgentName: agent.name,
-        statusHistory: [
-          ...currentInquiry.statusHistory,
-          {
-            status: 'Assigned',
-            changedBy: 'admin',
-            timestamp: timestamp
-          }
-        ]
-      }).then(() => {
-        // Update agent's active inquiry count
-        const userRef = database.ref(`users/user_${agentId}`);
-        userRef.update({
-          activeInquiries: (agent.activeInquiries || 0) + 1
+      try {
+        // Update inquiry
+        const timestamp = new Date().toISOString();
+        const updatedInquiry = {
+          ...currentInquiry,
+          status: 'Assigned',
+          assignedAgentId: agentId,
+          assignedAgentName: agent.name,
+          statusHistory: [
+            ...(currentInquiry.statusHistory || []),
+            {
+              status: 'Assigned',
+              changedBy: 'admin',
+              timestamp: timestamp
+            }
+          ]
+        };
+        
+        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedInquiry)
         });
         
+        // Note: Agent active inquiry count will be calculated on server side or on next load
         showAlert('Inquiry assigned successfully', 'success');
         closeModal('assignModal');
         currentInquiry = null;
-      }).catch(error => {
+        
+        // Reload inquiries
+        await loadInquiries();
+      } catch (error) {
         console.error('Error assigning inquiry:', error);
         showAlert('Failed to assign inquiry', 'danger');
-      });
+      }
     }
     
     function openReassignModal(inquiryKey) {
@@ -1297,7 +1291,7 @@
       openModal('reassignModal');
     }
     
-    function confirmReassign() {
+    async function confirmReassign() {
       const newAgentId = parseInt(document.getElementById('reassignAgent').value);
       const reason = document.getElementById('reassignReason').value.trim();
       
@@ -1319,45 +1313,46 @@
         return;
       }
       
-      // Update inquiry
-      const inquiryRef = database.ref(`inquiries/${currentInquiry.key}`);
-      const timestamp = new Date().toISOString();
-      
-      // Sanitize reason text
-      const sanitizedReason = reason.replace(/[<>]/g, '');
-      
-      inquiryRef.update({
-        assignedAgentId: newAgentId,
-        assignedAgentName: newAgent.name,
-        notes: `${currentInquiry.notes}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${sanitizedReason}`,
-        statusHistory: [
-          ...currentInquiry.statusHistory,
-          {
-            status: 'Reassigned',
-            changedBy: 'admin',
-            timestamp: timestamp,
-            note: `Reassigned from ${oldAgent.name} to ${newAgent.name}. Reason: ${reason}`
-          }
-        ]
-      }).then(() => {
-        // Update agent counts
-        if (oldAgent) {
-          database.ref(`users/user_${oldAgent.id}`).update({
-            activeInquiries: Math.max(0, (oldAgent.activeInquiries || 0) - 1)
-          });
-        }
+      try {
+        // Update inquiry
+        const timestamp = new Date().toISOString();
         
-        database.ref(`users/user_${newAgentId}`).update({
-          activeInquiries: (newAgent.activeInquiries || 0) + 1
+        // Sanitize reason text
+        const sanitizedReason = reason.replace(/[<>]/g, '');
+        
+        const updatedInquiry = {
+          ...currentInquiry,
+          assignedAgentId: newAgentId,
+          assignedAgentName: newAgent.name,
+          notes: `${currentInquiry.notes || ''}\n[${formatDateTime(timestamp)}] Reassigned from ${oldAgent?.name || 'Unknown'} to ${newAgent.name}. Reason: ${sanitizedReason}`,
+          statusHistory: [
+            ...(currentInquiry.statusHistory || []),
+            {
+              status: 'Reassigned',
+              changedBy: 'admin',
+              timestamp: timestamp,
+              note: `Reassigned from ${oldAgent?.name || 'Unknown'} to ${newAgent.name}. Reason: ${reason}`
+            }
+          ]
+        };
+        
+        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedInquiry)
         });
         
+        // Note: Agent counts will be calculated on server side or on next load
         showAlert('Inquiry reassigned successfully', 'success');
         closeModal('reassignModal');
         currentInquiry = null;
-      }).catch(error => {
+        
+        // Reload inquiries
+        await loadInquiries();
+      } catch (error) {
         console.error('Error reassigning inquiry:', error);
         showAlert('Failed to reassign inquiry', 'danger');
-      });
+      }
     }
     
     function viewInquiry(inquiryKey) {
@@ -1432,32 +1427,24 @@
       
       initNavigation('admin');
       
-      if (initializeFirebase()) {
-        loadProperties();
-        setupFilters();
-        setupForm();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadProperties();
+      setupFilters();
+      setupForm();
     });
     
-    function loadProperties() {
-      const propertiesRef = getPropertiesRef();
-      
-      propertiesRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        allProperties = [];
+    async function loadProperties() {
+      try {
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        allProperties = await propertiesRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            allProperties.push({ key: key, ...data[key] });
-          });
-          
-          allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
+        allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
         displayProperties(allProperties);
-      });
+      } catch (error) {
+        console.error('Error loading properties:', error);
+        allProperties = [];
+        displayProperties([]);
+      }
     }
     
     function displayProperties(properties) {
@@ -1605,7 +1592,7 @@
     }
     
     function setupForm() {
-      document.getElementById('propertyForm').addEventListener('submit', function(e) {
+      document.getElementById('propertyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const formData = {
@@ -1627,49 +1614,56 @@
           description: document.getElementById('description').value.trim()
         };
         
-        if (currentProperty) {
-          // Update existing property
-          const propertyRef = database.ref(`properties/${currentProperty.key}`);
-          propertyRef.update(formData)
-            .then(() => {
-              showAlert('Property updated successfully', 'success');
-              closeModal('propertyModal');
-              currentProperty = null;
-            })
-            .catch(error => {
-              console.error('Error updating property:', error);
-              showAlert('Failed to update property', 'danger');
+        try {
+          if (currentProperty) {
+            // Update existing property
+            const updatedProperty = {
+              ...currentProperty,
+              ...formData
+            };
+            
+            await fetch(`http://localhost:3000/api/properties/${currentProperty.id}`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(updatedProperty)
             });
-        } else {
-          // Add new property
-          const propertiesRef = getPropertiesRef();
-          const newPropertyKey = propertiesRef.push().key;
-          
-          const property = {
-            id: Date.now(),
-            ...formData,
-            status: 'Available',
-            photos: [
-              { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
-            ],
-            createdAt: new Date().toISOString()
-          };
-          
-          propertiesRef.child(newPropertyKey).set(property)
-            .then(() => {
-              showAlert('Property added successfully', 'success');
-              closeModal('propertyModal');
-            })
-            .catch(error => {
-              console.error('Error adding property:', error);
-              showAlert('Failed to add property', 'danger');
+            
+            showAlert('Property updated successfully', 'success');
+            closeModal('propertyModal');
+            currentProperty = null;
+          } else {
+            // Add new property
+            const property = {
+              id: Date.now(),
+              ...formData,
+              status: 'Available',
+              photos: [
+                { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
+              ],
+              createdAt: new Date().toISOString()
+            };
+            
+            await fetch('http://localhost:3000/api/properties', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(property)
             });
+            
+            showAlert('Property added successfully', 'success');
+            closeModal('propertyModal');
+          }
+          
+          // Reload properties
+          await loadProperties();
+        } catch (error) {
+          console.error('Error saving property:', error);
+          showAlert('Failed to save property', 'danger');
         }
       });
     }
     
-    function changeStatus(propertyKey) {
-      const property = allProperties.find(p => p.key === propertyKey);
+    async function changeStatus(propertyKey) {
+      const property = allProperties.find(p => p.id === propertyKey || p.key === propertyKey);
       if (!property) return;
       
       const newStatus = prompt(`Current status: ${property.status}\n\nEnter new status:\n- Available\n- Reserved\n- Pending\n- Sold\n- Withdrawn`, property.status);
@@ -1682,25 +1676,31 @@
         return;
       }
       
-      const propertyRef = database.ref(`properties/${propertyKey}`);
-      const updates = { status: newStatus };
-      
-      if (newStatus === 'Sold') {
-        const finalPrice = prompt('Enter final sale price:', property.price);
-        if (finalPrice) {
-          updates.finalSalePrice = parseFloat(finalPrice);
-          updates.soldDate = new Date().toISOString();
+      try {
+        const updates = { ...property, status: newStatus };
+        
+        if (newStatus === 'Sold') {
+          const finalPrice = prompt('Enter final sale price:', property.price);
+          if (finalPrice) {
+            updates.finalSalePrice = parseFloat(finalPrice);
+            updates.soldDate = new Date().toISOString();
+          }
         }
-      }
-      
-      propertyRef.update(updates)
-        .then(() => {
-          showAlert('Property status updated successfully', 'success');
-        })
-        .catch(error => {
-          console.error('Error updating status:', error);
-          showAlert('Failed to update status', 'danger');
+        
+        await fetch(`http://localhost:3000/api/properties/${property.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updates)
         });
+        
+        showAlert('Property status updated successfully', 'success');
+        
+        // Reload properties
+        await loadProperties();
+      } catch (error) {
+        console.error('Error updating status:', error);
+        showAlert('Failed to update status', 'danger');
+      }
     }
     
     function logout() {
@@ -1715,33 +1715,23 @@
       
       initNavigation('admin');
       
-      if (initializeFirebase()) {
-        loadAgents();
-      } else {
-        showAlert('Unable to connect to database', 'danger');
-      }
+      loadAgents();
     });
     
-    function loadAgents() {
-      const usersRef = getUsersRef();
-      
-      usersRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        allAgents = [];
+    async function loadAgents() {
+      try {
+        const usersRes = await fetch('http://localhost:3000/api/users');
+        const users = await usersRes.json();
         
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const user = data[key];
-            if (user.role === 'agent') {
-              allAgents.push({ key: key, ...user });
-            }
-          });
-          
-          allAgents.sort((a, b) => (b.totalCommission || 0) - (a.totalCommission || 0));
-        }
+        allAgents = users.filter(u => u.role === 'agent');
+        allAgents.sort((a, b) => (b.totalCommission || 0) - (a.totalCommission || 0));
         
         displayAgents();
-      });
+      } catch (error) {
+        console.error('Error loading agents:', error);
+        allAgents = [];
+        displayAgents();
+      }
     }
     
     function displayAgents() {
@@ -1876,7 +1866,7 @@
       }
     }
     
-    function generateReports() {
+    async function generateReports() {
       const range = document.getElementById('dateRange').value;
       
       if (range === 'custom') {
@@ -1892,15 +1882,12 @@
         endDate = new Date(end);
       }
       
-      const inquiriesRef = getInquiriesRef();
-      const propertiesRef = getPropertiesRef();
-      
-      Promise.all([
-        inquiriesRef.once('value'),
-        propertiesRef.once('value')
-      ]).then(([inquiriesSnapshot, propertiesSnapshot]) => {
-        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
-        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
+        
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const properties = await propertiesRes.json();
         
         const filtered = inquiries.filter(i => {
           const date = new Date(i.createdAt);
@@ -1965,24 +1952,24 @@
         `;
         
         showAlert('Reports generated successfully', 'success');
-      });
+      } catch (error) {
+        console.error('Error generating reports:', error);
+        showAlert('Failed to generate reports', 'danger');
+      }
     }
     
-    function exportReport(type) {
+    async function exportReport(type) {
       updateDateRange();
       
-      const inquiriesRef = getInquiriesRef();
-      const propertiesRef = getPropertiesRef();
-      const usersRef = getUsersRef();
-      
-      Promise.all([
-        inquiriesRef.once('value'),
-        propertiesRef.once('value'),
-        usersRef.once('value')
-      ]).then(([inquiriesSnapshot, propertiesSnapshot, usersSnapshot]) => {
-        const inquiries = inquiriesSnapshot.val() ? Object.values(inquiriesSnapshot.val()) : [];
-        const properties = propertiesSnapshot.val() ? Object.values(propertiesSnapshot.val()) : [];
-        const users = usersSnapshot.val() ? Object.values(usersSnapshot.val()) : [];
+      try {
+        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiries = await inquiriesRes.json();
+        
+        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const properties = await propertiesRes.json();
+        
+        const usersRes = await fetch('http://localhost:3000/api/users');
+        const users = await usersRes.json();
         
         let data = [];
         let filename = '';
