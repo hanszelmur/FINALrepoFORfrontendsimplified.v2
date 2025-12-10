@@ -28,6 +28,7 @@ Each portal runs independently on its own port with **single-page navigation** (
 - [Data Storage Structure](#data-storage-structure)
 - [How to Add New Agent](#how-to-add-new-agent)
 - [Quick Start](#quick-start)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Known Limitations](#known-limitations)
 - [Tech Stack](#tech-stack)
