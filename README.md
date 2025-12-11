@@ -1,6 +1,255 @@
 # 🏠 TES Property System v2 - Real Estate Inquiry Management
 
-A complete frontend-only real estate management system with JSON file storage, comprehensive validations, and progressive web app capabilities.
+A complete professional real estate management system with JSON file storage, comprehensive validations, and progressive web app capabilities.
+
+## 🌟 System Architecture
+
+TES Property System is a **multi-port Single Page Application (SPA)** architecture with separate portals for different user roles, all connected to a unified backend API.
+
+### Port Configuration
+
+| Service | Port | Access | Purpose |
+|---------|------|--------|---------|
+| **Backend API** | 3000 | Internal | REST API for all data operations |
+| **Customer Portal** | 3001 | Public | Browse properties & submit inquiries |
+| **Admin Portal** | 3002 | Admin Only | Manage properties, inquiries & agents |
+| **Agent Portal** | 3003 | Agents | View assigned inquiries & schedules |
+| **Super Admin Portal** | 3004 | Admin Only | HR management & employment |
+
+### Portal Overview
+
+#### 🛍️ Customer Portal (Port 3001)
+- Browse available properties with advanced filters
+- View detailed property information with photo galleries
+- Submit property inquiries
+- Progressive Web App (PWA) capabilities
+- Fully responsive design
+
+#### 🎛️ Admin Portal (Port 3002)
+- **Dashboard**: Real-time statistics and activity monitoring
+- **Property Management**: Add, edit, and manage 40+ property fields
+- **Inquiry Management**: Assign inquiries to agents, track status
+- **Agent Management**: View agent performance and statistics
+- **Reports & Analytics**: Export data in CSV/PDF formats
+- **Enhanced Property Creation**: Professional form with accordion sections
+
+#### 👨‍💼 Agent Portal (Port 3003)
+- View assigned inquiries
+- Update inquiry status
+- Manage calendar and viewing schedules
+- Track personal performance metrics
+
+#### 🏢 Super Admin Portal (Port 3004)
+- **HR Management**: Complete employment registration system
+- **Agent Creation**: Comprehensive form with 7 sections:
+  - Basic Information (name, email, phone, password)
+  - Employment Details (ID, position, department, hire date)
+  - License Information (PRC number, expiry, specialization)
+  - Address Information (full Philippine address)
+  - Emergency Contact (required)
+  - Government IDs (SSS, TIN, PhilHealth, Pag-IBIG)
+  - Internal Notes
+- Auto-generation of Employee IDs (EMP-YYYY-XXX format)
+- Auto-calculation of probation dates (+3 months)
+- Access control (admin role only)
+- Success modal with credential copy functionality
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ installed
+- npm or yarn package manager
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd FINALrepoFORfrontendsimplified.v2
+
+# Install dependencies
+npm install
+
+# Start all services (recommended)
+npm run dev:all
+```
+
+This will start:
+- Backend API on http://localhost:3000
+- Customer Portal on http://localhost:3001
+- Admin Portal on http://localhost:3002
+- Agent Portal on http://localhost:3003
+- Super Admin Portal on http://localhost:3004
+
+### Individual Portal Start
+
+```bash
+# Start only backend
+npm run backend
+
+# Start individual portals
+npm run dev:customer    # Port 3001
+npm run dev:admin       # Port 3002
+npm run dev:agent       # Port 3003
+npm run dev:superadmin  # Port 3004
+```
+
+### Build for Production
+
+```bash
+# Build all portals
+npm run build:all
+
+# Build individual portals
+npm run build:customer
+npm run build:admin
+npm run build:agent
+npm run build:superadmin
+```
+
+## 👥 User Roles & Access
+
+### Admin User
+- **Default Credentials**: admin@tesproperty.com / admin123
+- **Access**: Admin Portal (3002) + Super Admin Portal (3004)
+- **Capabilities**:
+  - Full property management
+  - Inquiry assignment and tracking
+  - Agent performance monitoring
+  - HR management and agent creation
+  - Report generation and export
+
+### Agent Users
+- **Access**: Agent Portal (3003)
+- **Capabilities**:
+  - View assigned inquiries
+  - Update inquiry status
+  - Manage viewing schedules
+  - Track personal metrics
+
+### Public Access
+- **Access**: Customer Portal (3001)
+- **Capabilities**:
+  - Browse properties
+  - Submit inquiries
+  - No login required
+
+## 📝 How to Add New Agent
+
+### Method 1: Super Admin Portal (Recommended)
+
+1. Login to Admin Portal (http://localhost:3002)
+2. Click "🏢 HR Portal →" in the sidebar
+3. Super Admin Portal opens (http://localhost:3004)
+4. Fill out the comprehensive employment registration form:
+   - **Basic Info**: Name, email (auto-checked for duplicates), phone, password
+   - **Employment**: Position, department, hire date, employment type
+   - **License**: PRC number, expiry, specialization (if applicable)
+   - **Address**: Full Philippine address with ZIP
+   - **Emergency Contact**: Required contact information
+   - **Government IDs**: SSS, TIN, PhilHealth, Pag-IBIG
+   - **Notes**: Internal recruitment notes
+5. Click "Create Agent Account"
+6. Success modal displays credentials - **copy and share securely**
+7. Options: "Add Another Agent" or "View All Agents"
+
+**Features**:
+- Real-time email duplicate checking
+- Auto-generated Employee ID (EMP-YYYY-XXX)
+- Auto-calculated probation end date (+3 months from hire)
+- Phone format validation (0917-XXX-XXXX)
+- Form progress indicator
+- Complete validation with inline error messages
+
+### Method 2: Direct Database Edit (Legacy)
+
+Edit `data/users.json` manually and add:
+```json
+{
+  "id": 8,
+  "name": "Agent Name",
+  "email": "agent@tesproperty.com",
+  "password": "password123",
+  "role": "agent",
+  "phone": "0917-123-4567",
+  "active": true,
+  "employmentInfo": {
+    "employeeId": "EMP-2025-008",
+    "dateHired": "2025-12-10T00:00:00Z",
+    "position": "Real Estate Agent",
+    "department": "Sales",
+    ...
+  },
+  "createdAt": "2025-12-10T00:00:00Z",
+  "updatedAt": "2025-12-10T00:00:00Z"
+}
+```
+
+## 🏘️ Enhanced Property Creation
+
+The Admin Portal now features a **professional 40+ field property form** with:
+
+### Accordion Sections
+
+1. **📋 Basic Information** (Auto-open)
+   - Property Code (auto-generated: PROP-YYYY-XXXX)
+   - Title, Description
+   - Price, Price Per Sqm (auto-calculated)
+   - Bedrooms, Bathrooms
+   - Square Meters (lot), Floor Area
+   - Property Type, Status
+
+2. **🏠 Property Details**
+   - Year Built (validated ≤ current year)
+   - Number of Floors
+   - Parking Spaces
+   - Furnished Status (Fully/Semi/Unfurnished)
+   - Facing Direction (N/S/E/W)
+
+3. **✨ Features & Amenities** (15 checkboxes)
+   - Swimming Pool, Garden, Balcony, Garage
+   - Security System, CCTV, 24/7 Security
+   - Gym, Playground, Clubhouse
+   - Generator, Water Tank, Solar Panels
+   - Pet-Friendly, Wheelchair Accessible
+
+4. **📍 Location**
+   - Street, Barangay, City, Province, ZIP
+   - Nearby Landmarks (textarea)
+
+5. **💰 Pricing**
+   - Listed Price
+   - Price Per Sqm (auto-calculated)
+   - Negotiable checkbox
+   - Minimum Offer (if negotiable)
+
+6. **📄 Legal Documents**
+   - Title Type (TCT/CCT/OCT/Others)
+   - Title Number
+   - Tax Declaration Number
+   - Ownership Type
+
+7. **📸 Photos** (Required)
+   - Upload up to 10 photos
+   - 2MB max per photo
+   - Auto-compression
+   - Preview with delete option
+   - Main photo designation
+
+8. **📝 Metadata** (Auto-filled)
+   - Date Added (ISO timestamp)
+   - Added By (current user)
+   - Added By Email
+   - Last Updated
+   - Source (Direct Owner/Developer/Broker/Referral)
+   - Internal Notes
+
+### Form Features
+- **Progress Indicator**: Shows completion percentage
+- **Real-time Validation**: Inline error messages
+- **Auto-calculations**: Price per sqm, probation dates
+- **Responsive Design**: Works on all screen sizes
+- **Accordion UI**: Collapsible sections for better UX
 
 ## 📋 Table of Contents
 
@@ -940,6 +1189,239 @@ npm run dev:all
 > Screenshot showing property information in agent portal
 
 > **Note**: Screenshots will be added after running `npm run dev:all` and capturing each portal in action. Screenshots should be hosted externally or added to a `/docs/images/` directory (not in `/screenshots/` at project root).
+
+---
+
+## 📦 Available Scripts
+
+### Development
+
+```bash
+# Start all services simultaneously (recommended)
+npm run dev:all
+
+# Start individual services
+npm run backend        # Backend API only (port 3000)
+npm run dev:customer   # Customer portal (port 3001)
+npm run dev:admin      # Admin portal (port 3002)
+npm run dev:agent      # Agent portal (port 3003)
+npm run dev:superadmin # Super Admin portal (port 3004)
+```
+
+### Build
+
+```bash
+# Build all portals for production
+npm run build:all
+
+# Build individual portals
+npm run build:customer
+npm run build:admin
+npm run build:agent
+npm run build:superadmin
+```
+
+### Code Quality
+
+```bash
+# Lint TypeScript files
+npm run lint
+
+# Format code with Prettier
+npm run format
+
+# Preview production build
+npm run preview
+```
+
+---
+
+## 🗄️ Data Structure Documentation
+
+### users.json Structure
+
+Complete user/agent data with employment information:
+
+```json
+{
+  "id": 8,
+  "name": "Juan dela Cruz",
+  "email": "juan@tesproperty.com",
+  "password": "agent123",
+  "role": "agent",
+  "phone": "0917-888-8888",
+  "active": true,
+  "employmentInfo": {
+    "employeeId": "EMP-2025-008",
+    "dateHired": "2025-12-10T10:30:00Z",
+    "position": "Real Estate Agent",
+    "department": "Sales",
+    "reportingTo": "Sales Manager",
+    "employmentType": "Full-time",
+    "probationEndDate": "2026-03-10T00:00:00Z",
+    "emergencyContact": {
+      "name": "Maria dela Cruz",
+      "relationship": "Spouse",
+      "phone": "0917-999-9999"
+    },
+    "address": {
+      "street": "123 Main St",
+      "barangay": "Brgy. Example",
+      "city": "Quezon City",
+      "province": "Metro Manila",
+      "zipCode": "1100"
+    },
+    "governmentIds": {
+      "sss": "12-3456789-0",
+      "tin": "123-456-789-000",
+      "philhealth": "12-345678901-2",
+      "pagibig": "1234-5678-9012"
+    },
+    "licenseNumber": "PRC-123456",
+    "licenseExpiry": "2027-12-31",
+    "specialization": "Residential",
+    "addedBy": "Admin User",
+    "addedByEmail": "admin@tesproperty.com",
+    "notes": "Recruited from Job Fair 2025"
+  },
+  "createdAt": "2025-12-10T10:30:00Z",
+  "updatedAt": "2025-12-10T10:30:00Z"
+}
+```
+
+### properties.json Structure
+
+Enhanced property data with 40+ fields:
+
+```json
+{
+  "id": 1,
+  "propertyCode": "PROP-2025-0001",
+  "title": "Modern 3-Bedroom House",
+  "name": "Modern 3-Bedroom House",
+  "description": "Beautiful modern house with garden...",
+  "price": 8500000,
+  "pricePerSqm": 42500,
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "squareMeters": 200,
+  "floorArea": 180,
+  "propertyType": "House",
+  "status": "Available",
+  "yearBuilt": 2020,
+  "floors": 2,
+  "parkingSpaces": 2,
+  "furnishedStatus": "Semi-Furnished",
+  "facingDirection": "North",
+  "features": [
+    "Swimming Pool",
+    "Garden",
+    "CCTV",
+    "24/7 Security",
+    "Garage"
+  ],
+  "address": {
+    "street": "123 Main Street",
+    "barangay": "Brgy. Example",
+    "city": "Quezon City",
+    "province": "Metro Manila",
+    "zip": "1100",
+    "nearbyLandmarks": "Near schools, malls, and hospitals"
+  },
+  "pricing": {
+    "listedPrice": 8500000,
+    "pricePerSqm": 42500,
+    "negotiable": true,
+    "minimumOffer": 8000000
+  },
+  "legal": {
+    "titleType": "TCT",
+    "titleNumber": "T-12345",
+    "taxDeclaration": "TD-2024-12345",
+    "ownershipType": "Individual"
+  },
+  "photos": [
+    "data:image/jpeg;base64,...",
+    "data:image/jpeg;base64,..."
+  ],
+  "reservationFee": 50000,
+  "commission": 170000,
+  "metadata": {
+    "dateAdded": "2025-12-10T11:00:00Z",
+    "addedBy": "Admin User",
+    "addedByEmail": "admin@tesproperty.com",
+    "lastUpdated": "2025-12-10T11:00:00Z",
+    "updatedBy": "Admin User",
+    "source": "Direct Owner",
+    "internalNotes": "Owner needs quick sale"
+  },
+  "createdAt": "2025-12-10T11:00:00Z"
+}
+```
+
+### inquiries.json Structure
+
+Customer inquiry data:
+
+```json
+{
+  "id": 1,
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "customerPhone": "0917-123-4567",
+  "propertyId": 1,
+  "propertyName": "Modern House",
+  "message": "Interested in viewing this property",
+  "status": "New",
+  "assignedAgentId": null,
+  "assignedAgentName": null,
+  "createdAt": "2025-12-10T12:00:00Z",
+  "updatedAt": "2025-12-10T12:00:00Z"
+}
+```
+
+### calendar-events.json Structure
+
+Agent viewing schedule:
+
+```json
+{
+  "id": 1,
+  "type": "viewing",
+  "title": "Property Viewing",
+  "date": "2025-12-15",
+  "time": "10:00",
+  "duration": 60,
+  "agentId": 2,
+  "agentName": "Maria Santos",
+  "propertyId": 1,
+  "propertyName": "Modern House",
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "customerPhone": "0917-123-4567",
+  "notes": "First time buyer",
+  "createdAt": "2025-12-10T12:00:00Z"
+}
+```
+
+### activity-log.json Structure
+
+System activity tracking:
+
+```json
+{
+  "timestamp": "2025-12-10T12:00:00Z",
+  "action": "ADD_PROPERTY",
+  "section": "Properties",
+  "note": "Property added via admin portal",
+  "details": {
+    "propertyCode": "PROP-2025-0001",
+    "propertyName": "Modern House",
+    "price": 8500000,
+    "addedBy": "Admin User"
+  }
+}
+```
 
 ---
 

@@ -2,8 +2,8 @@
   "_metadata": {
     "description": "Complete audit trail with clear descriptions of all system actions",
     "section": "Activity Log",
-    "recordCount": 0,
-    "lastModified": "2025-12-09T05:30:00Z",
+    "recordCount": 3,
+    "lastModified": "2025-12-10T16:08:53.923Z",
     "note": "Every action is logged here with timestamp, action type, section, and descriptive notes"
   },
   "data": [
@@ -16,6 +16,30 @@
         "version": "2.0.0",
         "dataStorageType": "JSON Files",
         "filesCreated": 8
+      }
+    },
+    {
+      "timestamp": "2025-12-10T16:08:40.629Z",
+      "action": "ADD_AGENT",
+      "section": "Users",
+      "note": "New agent registered via Super Admin portal",
+      "details": {
+        "agentName": "Test Agent",
+        "email": "testagent@tesproperty.com",
+        "employeeId": "EMP-2025-999",
+        "position": "Test Agent"
+      }
+    },
+    {
+      "timestamp": "2025-12-10T16:08:53.923Z",
+      "action": "ADD_PROPERTY",
+      "section": "Properties",
+      "note": "Property added via admin portal",
+      "details": {
+        "propertyCode": "PROP-2025-0001",
+        "propertyName": "Test Modern House",
+        "price": 5000000,
+        "addedBy": "Admin User"
       }
     }
   ]

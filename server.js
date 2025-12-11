@@ -115,10 +115,27 @@ app.post('/api/properties', async (req, res) => {
     const properties = await readJSONFile('properties.json');
     const newProperties = await readJSONFile('new-properties.json');
     
+    // Generate property code if not provided
+    const year = new Date().getFullYear();
+    const propertyCode = req.body.propertyCode || `PROP-${year}-${String(Date.now()).slice(-4)}`;
+    
+    // Calculate price per sqm if not provided
+    const pricePerSqm = req.body.pricePerSqm || 
+      (req.body.price && req.body.squareMeters ? Math.round(req.body.price / req.body.squareMeters) : 0);
+    
+    const now = new Date().toISOString();
     const newProperty = {
       ...req.body,
       id: Date.now(),
-      createdAt: new Date().toISOString(),
+      propertyCode,
+      pricePerSqm,
+      createdAt: now,
+      // Ensure metadata exists
+      metadata: {
+        ...req.body.metadata,
+        dateAdded: req.body.metadata?.dateAdded || now,
+        lastUpdated: now
+      }
     };
     
     properties.data.push(newProperty);
@@ -131,11 +148,21 @@ app.post('/api/properties', async (req, res) => {
       'ADD_PROPERTY',
       'Properties',
       'Property added via admin portal',
-      { propertyName: newProperty.name, price: newProperty.price }
+      { 
+        propertyCode: newProperty.propertyCode,
+        propertyName: newProperty.name || newProperty.title,
+        price: newProperty.price,
+        addedBy: newProperty.metadata?.addedBy
+      }
     );
     
-    res.status(201).json(newProperty);
+    res.status(201).json({
+      success: true,
+      message: 'Property created successfully',
+      property: newProperty
+    });
   } catch (error) {
+    console.error('Error adding property:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -151,7 +178,26 @@ app.put('/api/properties/:id', async (req, res) => {
     }
     
     const oldProperty = properties.data[index];
-    properties.data[index] = { ...properties.data[index], ...req.body };
+    const now = new Date().toISOString();
+    
+    // Preserve original metadata.dateAdded and update lastUpdated
+    const updatedProperty = {
+      ...properties.data[index],
+      ...req.body,
+      metadata: {
+        ...req.body.metadata,
+        dateAdded: oldProperty.metadata?.dateAdded || req.body.metadata?.dateAdded || now,
+        lastUpdated: now,
+        updatedBy: req.body.metadata?.updatedBy || 'Admin User'
+      }
+    };
+    
+    // Recalculate price per sqm if price or sqm changed
+    if (updatedProperty.price && updatedProperty.squareMeters) {
+      updatedProperty.pricePerSqm = Math.round(updatedProperty.price / updatedProperty.squareMeters);
+    }
+    
+    properties.data[index] = updatedProperty;
     
     await writeJSONFile('properties.json', properties);
     
@@ -160,15 +206,22 @@ app.put('/api/properties/:id', async (req, res) => {
       'Properties',
       'Property updated via admin portal',
       { 
-        propertyName: properties.data[index].name,
+        propertyCode: updatedProperty.propertyCode,
+        propertyName: updatedProperty.name || updatedProperty.title,
         changes: Object.keys(req.body),
         oldStatus: oldProperty.status,
-        newStatus: properties.data[index].status,
+        newStatus: updatedProperty.status,
+        updatedBy: updatedProperty.metadata?.updatedBy
       }
     );
     
-    res.json(properties.data[index]);
+    res.json({
+      success: true,
+      message: 'Property updated successfully',
+      property: updatedProperty
+    });
   } catch (error) {
+    console.error('Error updating property:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -301,6 +354,68 @@ app.get('/api/users', async (req, res) => {
     const users = data.data.map(({ password, ...user }) => user);
     res.json(users);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new user (agent)
+app.post('/api/users', async (req, res) => {
+  try {
+    const users = await readJSONFile('users.json');
+    const newAgents = await readJSONFile('new-agents.json');
+    
+    // Validate duplicate email
+    const emailExists = users.data.some(
+      (u) => u.email.toLowerCase() === req.body.email.toLowerCase()
+    );
+    
+    if (emailExists) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    
+    // Generate new ID (max + 1)
+    const maxId = users.data.length > 0 
+      ? Math.max(...users.data.map(u => u.id || 0))
+      : 0;
+    
+    const newUser = {
+      ...req.body,
+      id: maxId + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Add to both files
+    users.data.push(newUser);
+    newAgents.data.push(newUser);
+    
+    // Save to JSON files
+    await writeJSONFile('users.json', users);
+    await writeJSONFile('new-agents.json', newAgents);
+    
+    // Log activity
+    await logActivity(
+      'ADD_AGENT',
+      'Users',
+      'New agent registered via Super Admin portal',
+      {
+        agentName: newUser.name,
+        email: newUser.email,
+        employeeId: newUser.employmentInfo?.employeeId,
+        position: newUser.employmentInfo?.position,
+        addedBy: newUser.employmentInfo?.addedBy
+      }
+    );
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = newUser;
+    res.status(201).json({
+      success: true,
+      message: 'Agent created successfully',
+      user: userWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
     res.status(500).json({ error: error.message });
   }
 });

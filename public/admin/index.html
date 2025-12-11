@@ -109,7 +109,8 @@
         <a href="#properties" onclick="showSection('properties'); return false;" data-section="properties">🏠 Properties</a>
         <a href="#agents" onclick="showSection('agents'); return false;" data-section="agents">👥 Agents</a>
         <a href="#reports" onclick="showSection('reports'); return false;" data-section="reports">📈 Reports</a>
-        <a href="#" onclick="logout(); return false;" style="margin-top: 2rem; background-color: #dc2626; color: white;">🚪 Logout</a>
+        <a href="http://localhost:3004" target="_blank" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-top: 1rem;">🏢 HR Portal →</a>
+        <a href="#" onclick="logout(); return false;" style="margin-top: 1rem; background-color: #dc2626; color: white;">🚪 Logout</a>
       </nav>
     </aside>
     
@@ -411,101 +412,327 @@
     </div>
   </div>
   
-  <!-- Add/Edit Property Modal -->
+  <!-- Add/Edit Property Modal - Enhanced with 40+ Fields -->
   <div id="propertyModal" class="modal">
-    <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
         <h2 class="modal-title" id="propertyModalTitle">Add Property</h2>
         <button class="modal-close" onclick="closeModal('propertyModal')">&times;</button>
       </div>
       <form id="propertyForm">
-        <div class="grid grid-cols-2">
-          <div class="form-group">
-            <label for="propertyName">Property Name *</label>
-            <input type="text" id="propertyName" required>
+        <!-- Progress Indicator -->
+        <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-weight: 500;">Form Completion</span>
+            <span id="formProgress">0%</span>
           </div>
-          
-          <div class="form-group">
-            <label for="propertyType">Property Type *</label>
-            <select id="propertyType" required>
-              <option value="House">House</option>
-              <option value="Condo">Condo</option>
-              <option value="Townhouse">Townhouse</option>
-              <option value="Lot">Lot</option>
-              <option value="Commercial">Commercial</option>
-            </select>
+          <div style="background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div id="formProgressBar" style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: 0%; transition: width 0.3s;"></div>
           </div>
         </div>
+
+        <!-- Section 1: Basic Information -->
+        <details class="property-section" open>
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            📋 Basic Information
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="propertyCode">Property Code</label>
+                <input type="text" id="propertyCode" readonly placeholder="Auto-generated: PROP-YYYY-XXXX" style="background: #f3f4f6;">
+              </div>
+              <div class="form-group">
+                <label for="propertyStatus">Status *</label>
+                <select id="propertyStatus" required>
+                  <option value="Available">Available</option>
+                  <option value="Reserved">Reserved</option>
+                  <option value="Sold">Sold</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="propertyName">Property Title *</label>
+              <input type="text" id="propertyName" required placeholder="Modern 3-Bedroom House">
+            </div>
+            <div class="form-group">
+              <label for="description">Description *</label>
+              <textarea id="description" rows="4" required placeholder="Detailed property description..."></textarea>
+            </div>
+            <div class="grid grid-cols-3">
+              <div class="form-group">
+                <label for="price">Listed Price (₱) *</label>
+                <input type="number" id="price" min="1" required placeholder="8500000">
+              </div>
+              <div class="form-group">
+                <label for="pricePerSqm">Price Per Sqm (₱)</label>
+                <input type="number" id="pricePerSqm" readonly placeholder="Auto-calculated" style="background: #f3f4f6;">
+              </div>
+              <div class="form-group">
+                <label for="propertyType">Property Type *</label>
+                <select id="propertyType" required>
+                  <option value="">Select Type</option>
+                  <option value="House">House</option>
+                  <option value="Condo">Condo</option>
+                  <option value="Townhouse">Townhouse</option>
+                  <option value="Lot">Lot</option>
+                  <option value="Commercial">Commercial</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="bedrooms">Bedrooms *</label>
+                <input type="number" id="bedrooms" min="0" required value="0">
+              </div>
+              <div class="form-group">
+                <label for="bathrooms">Bathrooms *</label>
+                <input type="number" id="bathrooms" min="0" required value="0">
+              </div>
+            </div>
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="squareMeters">Lot Area (m²) *</label>
+                <input type="number" id="squareMeters" min="1" required placeholder="200">
+              </div>
+              <div class="form-group">
+                <label for="floorArea">Floor Area (m²)</label>
+                <input type="number" id="floorArea" min="0" placeholder="180">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 2: Property Details -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            🏠 Property Details
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="grid grid-cols-3">
+              <div class="form-group">
+                <label for="yearBuilt">Year Built</label>
+                <input type="number" id="yearBuilt" min="1900" max="2100" placeholder="2020">
+              </div>
+              <div class="form-group">
+                <label for="floors">Number of Floors</label>
+                <input type="number" id="floors" min="0" placeholder="2">
+              </div>
+              <div class="form-group">
+                <label for="parkingSpaces">Parking Spaces</label>
+                <input type="number" id="parkingSpaces" min="0" placeholder="2">
+              </div>
+            </div>
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="furnishedStatus">Furnished Status</label>
+                <select id="furnishedStatus">
+                  <option value="">Not Specified</option>
+                  <option value="Fully Furnished">Fully Furnished</option>
+                  <option value="Semi-Furnished">Semi-Furnished</option>
+                  <option value="Unfurnished">Unfurnished</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="facingDirection">Facing Direction</label>
+                <select id="facingDirection">
+                  <option value="">Not Specified</option>
+                  <option value="North">North</option>
+                  <option value="South">South</option>
+                  <option value="East">East</option>
+                  <option value="West">West</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 3: Features & Amenities -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            ✨ Features & Amenities
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Swimming Pool"> Swimming Pool</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Garden"> Garden</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Balcony"> Balcony</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Garage"> Garage</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Security System"> Security System</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="CCTV"> CCTV</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="24/7 Security"> 24/7 Security</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Gym"> Gym</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Playground"> Playground</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Clubhouse"> Clubhouse</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Generator"> Generator</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Water Tank"> Water Tank</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Solar Panels"> Solar Panels</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Pet-Friendly"> Pet-Friendly</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" class="feature-checkbox" value="Wheelchair Accessible"> Wheelchair Accessible</label>
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 4: Location -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            📍 Location
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="street">Street Address *</label>
+                <input type="text" id="street" required placeholder="123 Main Street">
+              </div>
+              <div class="form-group">
+                <label for="barangay">Barangay *</label>
+                <input type="text" id="barangay" required placeholder="Brgy. Example">
+              </div>
+            </div>
+            <div class="grid grid-cols-3">
+              <div class="form-group">
+                <label for="city">City *</label>
+                <input type="text" id="city" required placeholder="Quezon City">
+              </div>
+              <div class="form-group">
+                <label for="province">Province *</label>
+                <input type="text" id="province" required placeholder="Metro Manila">
+              </div>
+              <div class="form-group">
+                <label for="zip">ZIP Code *</label>
+                <input type="text" id="zip" maxlength="4" required placeholder="1100">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="nearbyLandmarks">Nearby Landmarks</label>
+              <textarea id="nearbyLandmarks" rows="3" placeholder="List nearby schools, malls, hospitals, etc."></textarea>
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 5: Pricing -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            💰 Pricing
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="reservationFee">Reservation Fee (₱) *</label>
+                <input type="number" id="reservationFee" min="0" required placeholder="50000">
+              </div>
+              <div class="form-group">
+                <label for="commission">Commission (₱) *</label>
+                <input type="number" id="commission" min="0" required placeholder="170000">
+              </div>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="negotiable"> Price is negotiable
+              </label>
+            </div>
+            <div class="form-group" id="minimumOfferGroup" style="display: none;">
+              <label for="minimumOffer">Minimum Offer (₱)</label>
+              <input type="number" id="minimumOffer" min="0" placeholder="8000000">
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 6: Legal Documents -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            📄 Legal Documents
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="titleType">Title Type</label>
+                <select id="titleType">
+                  <option value="">Not Specified</option>
+                  <option value="TCT">TCT (Transfer Certificate of Title)</option>
+                  <option value="CCT">CCT (Condominium Certificate of Title)</option>
+                  <option value="OCT">OCT (Original Certificate of Title)</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="titleNumber">Title Number</label>
+                <input type="text" id="titleNumber" placeholder="T-12345">
+              </div>
+            </div>
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label for="taxDeclaration">Tax Declaration Number</label>
+                <input type="text" id="taxDeclaration" placeholder="TD-2024-12345">
+              </div>
+              <div class="form-group">
+                <label for="ownershipType">Ownership Type</label>
+                <select id="ownershipType">
+                  <option value="">Not Specified</option>
+                  <option value="Individual">Individual</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Co-ownership">Co-ownership</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 7: Photos -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            📸 Photos (At least 1 required)
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="form-group">
+              <label for="propertyPhotos">Upload Photos (Max 10, 2MB each)</label>
+              <input type="file" id="propertyPhotos" accept="image/*" multiple style="margin-bottom: 1rem;">
+              <div id="photoPreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Section 8: Metadata -->
+        <details class="property-section">
+          <summary style="font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            📝 Metadata (Auto-filled)
+          </summary>
+          <div style="padding-left: 1rem;">
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label>Date Added</label>
+                <input type="text" id="dateAdded" readonly style="background: #f3f4f6;">
+              </div>
+              <div class="form-group">
+                <label>Added By</label>
+                <input type="text" id="addedBy" readonly style="background: #f3f4f6;">
+              </div>
+            </div>
+            <div class="grid grid-cols-2">
+              <div class="form-group">
+                <label>Added By Email</label>
+                <input type="text" id="addedByEmail" readonly style="background: #f3f4f6;">
+              </div>
+              <div class="form-group">
+                <label for="source">Source</label>
+                <select id="source">
+                  <option value="Direct Owner">Direct Owner</option>
+                  <option value="Developer">Developer</option>
+                  <option value="Broker">Broker</option>
+                  <option value="Referral">Referral</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="internalNotes">Internal Notes</label>
+              <textarea id="internalNotes" rows="3" placeholder="Notes for internal use only..."></textarea>
+            </div>
+          </div>
+        </details>
         
-        <h4 style="margin-top: 1.5rem;">Address</h4>
-        <div class="grid grid-cols-2">
-          <div class="form-group">
-            <label for="street">Street *</label>
-            <input type="text" id="street" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="barangay">Barangay *</label>
-            <input type="text" id="barangay" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="city">City *</label>
-            <input type="text" id="city" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="province">Province *</label>
-            <input type="text" id="province" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="zip">ZIP Code *</label>
-            <input type="text" id="zip" maxlength="4" required>
-          </div>
-        </div>
-        
-        <h4 style="margin-top: 1.5rem;">Details</h4>
-        <div class="grid grid-cols-2">
-          <div class="form-group">
-            <label for="price">Price (₱) *</label>
-            <input type="number" id="price" min="100000" max="999999999" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="floorArea">Floor Area (m²)</label>
-            <input type="number" id="floorArea" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="bedrooms">Bedrooms</label>
-            <input type="number" id="bedrooms" min="0" value="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="bathrooms">Bathrooms</label>
-            <input type="number" id="bathrooms" min="0" value="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="reservationFee">Reservation Fee (₱) *</label>
-            <input type="number" id="reservationFee" min="0" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="commission">Commission (₱) *</label>
-            <input type="number" id="commission" min="0" required>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="description">Description *</label>
-          <textarea id="description" rows="4" required></textarea>
-        </div>
-        
-        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button type="submit" class="btn btn-primary">Save Property</button>
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
           <button type="button" onclick="closeModal('propertyModal')" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Property</button>
         </div>
       </form>
     </div>
@@ -1565,7 +1792,133 @@
       currentProperty = null;
       document.getElementById('propertyModalTitle').textContent = 'Add Property';
       document.getElementById('propertyForm').reset();
+      
+      // Generate property code
+      const year = new Date().getFullYear();
+      const random = String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0');
+      document.getElementById('propertyCode').value = `PROP-${year}-${random}`;
+      
+      // Set metadata
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      document.getElementById('dateAdded').value = new Date().toISOString();
+      document.getElementById('addedBy').value = currentUser.name || 'Admin User';
+      document.getElementById('addedByEmail').value = currentUser.email || 'admin@tesproperty.com';
+      
+      // Reset photos
+      document.getElementById('photoPreview').innerHTML = '';
+      propertyPhotos = [];
+      
       openModal('propertyModal');
+      updateFormProgress();
+    }
+    
+    
+    // Enhanced Property Form - Variables and Functions
+    let propertyPhotos = [];
+    
+    // Simple alert function (can be replaced with toast system)
+    function showAlert(message, type = 'info') {
+      // For now, using console and browser alert
+      // TODO: Replace with toast notification system from common.css
+      console.log(`[${type.toUpperCase()}]`, message);
+      alert(message);
+    }
+    
+    // Auto-calculate price per sqm
+    function calculatePricePerSqm() {
+      const price = parseFloat(document.getElementById('price').value) || 0;
+      const sqm = parseFloat(document.getElementById('squareMeters').value) || 0;
+      if (price > 0 && sqm > 0) {
+        document.getElementById('pricePerSqm').value = Math.round(price / sqm);
+      } else {
+        document.getElementById('pricePerSqm').value = '';
+      }
+      updateFormProgress();
+    }
+    
+    // Update form progress
+    function updateFormProgress() {
+      const requiredFields = [
+        'propertyName', 'description', 'price', 'propertyType', 'bedrooms', 
+        'bathrooms', 'squareMeters', 'street', 'barangay', 'city', 
+        'province', 'zip', 'reservationFee', 'commission'
+      ];
+      
+      let filledCount = 0;
+      requiredFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value && el.value.trim()) filledCount++;
+      });
+      
+      // Add photo requirement
+      if (propertyPhotos.length > 0) filledCount++;
+      const totalRequired = requiredFields.length + 1; // +1 for photos
+      
+      const percentage = Math.round((filledCount / totalRequired) * 100);
+      document.getElementById('formProgress').textContent = percentage + '%';
+      document.getElementById('formProgressBar').style.width = percentage + '%';
+    }
+    
+    // Handle photo uploads
+    function setupPhotoUpload() {
+      document.getElementById('propertyPhotos').addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        const maxFiles = 10 - propertyPhotos.length;
+        
+        if (files.length > maxFiles) {
+          showAlert(`You can only upload ${maxFiles} more photos (max 10 total)`, 'warning');
+          return;
+        }
+        
+        for (const file of files) {
+          if (file.size > 2 * 1024 * 1024) {
+            showAlert(`File ${file.name} is too large. Maximum size is 2MB.`, 'warning');
+            continue;
+          }
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            propertyPhotos.push(e.target.result);
+            renderPhotoPreview();
+            updateFormProgress();
+          };
+          reader.readAsDataURL(file);
+        }
+        
+        e.target.value = ''; // Reset input
+      });
+    }
+    
+    // Render photo preview
+    function renderPhotoPreview() {
+      const preview = document.getElementById('photoPreview');
+      preview.innerHTML = propertyPhotos.map((photo, index) => `
+        <div style="position: relative; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+          <img src="${photo}" style="width: 100%; height: 150px; object-fit: cover;">
+          <button type="button" onclick="removePhoto(${index})" style="position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 14px;">×</button>
+          <div style="padding: 0.5rem; font-size: 0.75rem; background: #f9fafb;">${index === 0 ? 'Main Photo' : 'Photo ' + (index + 1)}</div>
+        </div>
+      `).join('');
+    }
+    
+    // Remove photo
+    function removePhoto(index) {
+      propertyPhotos.splice(index, 1);
+      renderPhotoPreview();
+      updateFormProgress();
+    }
+    
+    // Toggle negotiable minimum offer
+    function setupNegotiableToggle() {
+      document.getElementById('negotiable').addEventListener('change', (e) => {
+        document.getElementById('minimumOfferGroup').style.display = e.target.checked ? 'block' : 'none';
+      });
+    }
+    
+    // Collect selected features
+    function getSelectedFeatures() {
+      const checkboxes = document.querySelectorAll('.feature-checkbox:checked');
+      return Array.from(checkboxes).map(cb => cb.value);
     }
     
     function editProperty(propertyKey) {
@@ -1592,34 +1945,111 @@
     }
     
     function setupForm() {
+      // Setup enhanced form features
+      setupPhotoUpload();
+      setupNegotiableToggle();
+      
+      // Auto-calculate price per sqm
+      document.getElementById('price').addEventListener('input', calculatePricePerSqm);
+      document.getElementById('squareMeters').addEventListener('input', calculatePricePerSqm);
+      
+      // Update progress on field changes
+      const formFields = document.getElementById('propertyForm').querySelectorAll('input, select, textarea');
+      formFields.forEach(field => {
+        field.addEventListener('change', updateFormProgress);
+        field.addEventListener('input', updateFormProgress);
+      });
+      
       document.getElementById('propertyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // Validate at least one photo
+        if (propertyPhotos.length === 0) {
+          showAlert('Please upload at least one photo', 'danger');
+          return;
+        }
+        
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const now = new Date().toISOString();
+        
         const formData = {
+          propertyCode: document.getElementById('propertyCode').value,
           name: document.getElementById('propertyName').value.trim(),
+          title: document.getElementById('propertyName').value.trim(),
+          description: document.getElementById('description').value.trim(),
+          price: parseFloat(document.getElementById('price').value),
+          pricePerSqm: parseFloat(document.getElementById('pricePerSqm').value) || 0,
+          bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
+          bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
+          squareMeters: parseFloat(document.getElementById('squareMeters').value),
+          floorArea: parseFloat(document.getElementById('floorArea').value) || 0,
           propertyType: document.getElementById('propertyType').value,
+          status: document.getElementById('propertyStatus').value || 'Available',
+          
+          // Property Details
+          yearBuilt: parseInt(document.getElementById('yearBuilt').value) || null,
+          floors: parseInt(document.getElementById('floors').value) || null,
+          parkingSpaces: parseInt(document.getElementById('parkingSpaces').value) || null,
+          furnishedStatus: document.getElementById('furnishedStatus').value || null,
+          facingDirection: document.getElementById('facingDirection').value || null,
+          
+          // Features
+          features: getSelectedFeatures(),
+          
+          // Address
           address: {
             street: document.getElementById('street').value.trim(),
             barangay: document.getElementById('barangay').value.trim(),
             city: document.getElementById('city').value.trim(),
             province: document.getElementById('province').value.trim(),
-            zip: document.getElementById('zip').value.trim()
+            zip: document.getElementById('zip').value.trim(),
+            nearbyLandmarks: document.getElementById('nearbyLandmarks').value.trim() || null
           },
-          price: parseFloat(document.getElementById('price').value),
-          floorArea: parseFloat(document.getElementById('floorArea').value) || 0,
-          bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
-          bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
+          
+          // Pricing
           reservationFee: parseFloat(document.getElementById('reservationFee').value),
           commission: parseFloat(document.getElementById('commission').value),
-          description: document.getElementById('description').value.trim()
+          pricing: {
+            listedPrice: parseFloat(document.getElementById('price').value),
+            pricePerSqm: parseFloat(document.getElementById('pricePerSqm').value) || 0,
+            negotiable: document.getElementById('negotiable').checked,
+            minimumOffer: document.getElementById('negotiable').checked ? 
+              (parseFloat(document.getElementById('minimumOffer').value) || null) : null
+          },
+          
+          // Legal
+          legal: {
+            titleType: document.getElementById('titleType').value || null,
+            titleNumber: document.getElementById('titleNumber').value.trim() || null,
+            taxDeclaration: document.getElementById('taxDeclaration').value.trim() || null,
+            ownershipType: document.getElementById('ownershipType').value || null
+          },
+          
+          // Photos
+          photos: propertyPhotos,
+          
+          // Metadata
+          metadata: {
+            dateAdded: document.getElementById('dateAdded').value || now,
+            addedBy: document.getElementById('addedBy').value,
+            addedByEmail: document.getElementById('addedByEmail').value,
+            lastUpdated: now,
+            updatedBy: currentUser.name || 'Admin User',
+            source: document.getElementById('source').value,
+            internalNotes: document.getElementById('internalNotes').value.trim() || null
+          }
         };
         
         try {
           if (currentProperty) {
-            // Update existing property
+            // Update existing property - preserve original dateAdded
             const updatedProperty = {
               ...currentProperty,
-              ...formData
+              ...formData,
+              metadata: {
+                ...formData.metadata,
+                dateAdded: currentProperty.metadata?.dateAdded || formData.metadata.dateAdded
+              }
             };
             
             await fetch(`http://localhost:3000/api/properties/${currentProperty.id}`, {
@@ -1636,11 +2066,7 @@
             const property = {
               id: Date.now(),
               ...formData,
-              status: 'Available',
-              photos: [
-                { url: 'https://via.placeholder.com/800x600?text=Property+Image', caption: 'Main Photo' }
-              ],
-              createdAt: new Date().toISOString()
+              createdAt: now
             };
             
             await fetch('http://localhost:3000/api/properties', {

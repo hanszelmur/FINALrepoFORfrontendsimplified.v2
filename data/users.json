@@ -2,8 +2,8 @@
   "_metadata": {
     "description": "All users in the system (admin + agents)",
     "section": "Users",
-    "recordCount": 7,
-    "lastModified": "2025-12-09T05:30:00Z",
+    "recordCount": 8,
+    "lastModified": "2025-12-10T16:08:40.626Z",
     "note": "System administrator manually edits this file when HR hires new agents - NO web UI for security"
   },
   "data": [
@@ -76,6 +76,24 @@
       "phone": "0917-666-6666",
       "active": true,
       "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "name": "Test Agent",
+      "email": "testagent@tesproperty.com",
+      "password": "test123",
+      "role": "agent",
+      "phone": "0917-999-8888",
+      "active": true,
+      "employmentInfo": {
+        "employeeId": "EMP-2025-999",
+        "dateHired": "2025-12-10T00:00:00Z",
+        "position": "Test Agent",
+        "department": "Sales",
+        "employmentType": "Full-time"
+      },
+      "id": 8,
+      "createdAt": "2025-12-10T16:08:40.626Z",
+      "updatedAt": "2025-12-10T16:08:40.626Z"
     }
   ]
 }

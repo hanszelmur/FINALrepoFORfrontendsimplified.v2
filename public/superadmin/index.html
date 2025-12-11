@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin - HR Portal | TES Property</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      color: #667eea;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .header p {
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-back {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-back:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+
+    .form-section {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .form-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .form-section h2 {
+      color: #667eea;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .form-group label .required {
+      color: #ef4444;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group input.error,
+    .form-group select.error {
+      border-color: #ef4444;
+    }
+
+    .form-group .error-message {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-group input[readonly] {
+      background: #f3f4f6;
+      cursor: not-allowed;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      padding-top: 2rem;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f4f6;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      transform: scale(0.9);
+      transition: all 0.3s;
+    }
+
+    .modal.active .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-header h2 {
+      color: #667eea;
+      font-size: 1.5rem;
+    }
+
+    .modal-body {
+      margin-bottom: 1.5rem;
+    }
+
+    .credential-box {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .credential-box p {
+      margin-bottom: 0.5rem;
+      color: #374151;
+    }
+
+    .credential-box strong {
+      color: #1f2937;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: white;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transform: translateX(400px);
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 10001;
+    }
+
+    .toast.active {
+      transform: translateX(0);
+    }
+
+    .toast.success {
+      border-left: 4px solid #10b981;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .btn-generate {
+      background: #8b5cf6;
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-generate:hover {
+      background: #7c3aed;
+    }
+
+    .info-text {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>✅ Agent Created Successfully!</h2>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1.5rem;">New agent has been registered. Here are the login credentials:</p>
+        
+        <div class="credential-box">
+          <p><strong>Employee ID:</strong> <span id="modalEmployeeId"></span></p>
+          <p><strong>Name:</strong> <span id="modalName"></span></p>
+          <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+          <p><strong>Password:</strong> <span id="modalPassword"></span></p>
+          <p><strong>Position:</strong> <span id="modalPosition"></span></p>
+        </div>
+
+        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem;">
+          ⚠️ Please copy these credentials and share them with the new agent securely.
+        </p>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="copyCredentials()">📋 Copy Credentials</button>
+        <button class="btn btn-success" onclick="addAnother()">➕ Add Another Agent</button>
+        <button class="btn btn-primary" onclick="viewAllAgents()">👥 View All Agents</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span id="toastMessage"></span>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <h1>🏢 Super Admin - HR Portal</h1>
+        <p>Employment Registration & Management</p>
+      </div>
+      <a href="#" id="backToAdminBtn" class="btn btn-back" onclick="goToAdminPortal(); return false;">← Back to Admin Portal</a>
+    </div>
+
+    <!-- Employment Registration Form -->
+    <div class="form-card">
+      <form id="employmentForm">
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h2>👤 Basic Information</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name <span class="required">*</span></label>
+              <input type="text" id="name" required placeholder="Juan dela Cruz">
+              <span class="error-message" id="nameError"></span>
+            </div>
+            <div class="form-group">
+              <label>Email <span class="required">*</span></label>
+              <input type="email" id="email" required placeholder="juan@tesproperty.com">
+              <span class="error-message" id="emailError"></span>
+              <span class="info-text">Will be checked for duplicates</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number <span class="required">*</span></label>
+              <input type="tel" id="phone" required placeholder="0917-123-4567" pattern="[0-9]{4}-[0-9]{3}-[0-9]{4}">
+              <span class="error-message" id="phoneError"></span>
+              <span class="info-text">Format: 0917-XXX-XXXX</span>
+            </div>
+            <div class="form-group">
+              <label>Password <span class="required">*</span></label>
+              <input type="text" id="password" required placeholder="Generate or type password">
+              <span class="error-message" id="passwordError"></span>
+              <button type="button" class="btn btn-generate" onclick="generatePassword()">🎲 Generate Password</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment Details -->
+        <div class="form-section">
+          <h2>💼 Employment Details</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Employee ID</label>
+              <input type="text" id="employeeId" readonly placeholder="Auto-generated">
+              <span class="info-text">Format: EMP-YYYY-XXX</span>
+            </div>
+            <div class="form-group">
+              <label>Position <span class="required">*</span></label>
+              <input type="text" id="position" required placeholder="Real Estate Agent">
+              <span class="error-message" id="positionError"></span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department <span class="required">*</span></label>
+              <select id="department" required>
+                <option value="">Select Department</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Operations">Operations</option>
+                <option value="Finance">Finance</option>
+                <option value="IT">IT</option>
+                <option value="HR">HR</option>
+              </select>
+              <span class="error-message" id="departmentError"></span>
+            </div>
+            <div class="form-group">
+              <label>Hire Date <span class="required">*</span></label>
+              <input type="date" id="hireDate" required>
+              <span class="error-message" id="hireDateError"></span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Employment Type <span class="required">*</span></label>
+              <select id="employmentType" required>
+                <option value="">Select Type</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Probation">Probation</option>
+              </select>
+              <span class="error-message" id="employmentTypeError"></span>
+            </div>
+            <div class="form-group">
+              <label>Probation End Date</label>
+              <input type="date" id="probationEndDate" readonly>
+              <span class="info-text">Auto-calculated (+3 months from hire date)</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Reporting To</label>
+              <input type="text" id="reportingTo" placeholder="Sales Manager">
+            </div>
+          </div>
+        </div>
+
+        <!-- License Information -->
+        <div class="form-section">
+          <h2>📜 License Information</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>PRC License Number</label>
+              <input type="text" id="licenseNumber" placeholder="PRC-123456">
+            </div>
+            <div class="form-group">
+              <label>License Expiry Date</label>
+              <input type="date" id="licenseExpiry">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Specialization</label>
+              <input type="text" id="specialization" placeholder="Residential, Commercial, etc.">
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="form-section">
+          <h2>📍 Address Information</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Street Address <span class="required">*</span></label>
+              <input type="text" id="street" required placeholder="123 Main St">
+              <span class="error-message" id="streetError"></span>
+            </div>
+            <div class="form-group">
+              <label>Barangay <span class="required">*</span></label>
+              <input type="text" id="barangay" required placeholder="Barangay Name">
+              <span class="error-message" id="barangayError"></span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>City <span class="required">*</span></label>
+              <input type="text" id="city" required placeholder="Quezon City">
+              <span class="error-message" id="cityError"></span>
+            </div>
+            <div class="form-group">
+              <label>Province <span class="required">*</span></label>
+              <input type="text" id="province" required placeholder="Metro Manila">
+              <span class="error-message" id="provinceError"></span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>ZIP Code <span class="required">*</span></label>
+              <input type="text" id="zipCode" required placeholder="1100" pattern="[0-9]{4}">
+              <span class="error-message" id="zipCodeError"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="form-section">
+          <h2>🚨 Emergency Contact</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Contact Name <span class="required">*</span></label>
+              <input type="text" id="emergencyName" required placeholder="Maria dela Cruz">
+              <span class="error-message" id="emergencyNameError"></span>
+            </div>
+            <div class="form-group">
+              <label>Relationship <span class="required">*</span></label>
+              <input type="text" id="emergencyRelationship" required placeholder="Spouse, Parent, Sibling">
+              <span class="error-message" id="emergencyRelationshipError"></span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Contact Phone <span class="required">*</span></label>
+              <input type="tel" id="emergencyPhone" required placeholder="0917-123-4567" pattern="[0-9]{4}-[0-9]{3}-[0-9]{4}">
+              <span class="error-message" id="emergencyPhoneError"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Government IDs -->
+        <div class="form-section">
+          <h2>🆔 Government IDs</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>SSS Number</label>
+              <input type="text" id="sss" placeholder="XX-XXXXXXX-X" pattern="[0-9]{2}-[0-9]{7}-[0-9]">
+              <span class="info-text">Format: XX-XXXXXXX-X</span>
+            </div>
+            <div class="form-group">
+              <label>TIN</label>
+              <input type="text" id="tin" placeholder="XXX-XXX-XXX-XXX" pattern="[0-9]{3}-[0-9]{3}-[0-9]{3}-[0-9]{3}">
+              <span class="info-text">Format: XXX-XXX-XXX-XXX</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>PhilHealth Number</label>
+              <input type="text" id="philhealth" placeholder="XX-XXXXXXXXX-X" pattern="[0-9]{2}-[0-9]{9}-[0-9]">
+              <span class="info-text">Format: XX-XXXXXXXXX-X</span>
+            </div>
+            <div class="form-group">
+              <label>Pag-IBIG Number</label>
+              <input type="text" id="pagibig" placeholder="XXXX-XXXX-XXXX" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}">
+              <span class="info-text">Format: XXXX-XXXX-XXXX</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="form-section">
+          <h2>📝 Additional Notes</h2>
+          <div class="form-group">
+            <label>Internal Notes</label>
+            <textarea id="notes" placeholder="Recruitment source, interview notes, special considerations, etc."></textarea>
+            <span class="info-text">For HR use only - not visible to the agent</span>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 Reset Form</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">✅ Create Agent Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Configuration - can be overridden via environment variables in production
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000' 
+      : '/api';
+    const ADMIN_PORTAL_URL = window.location.hostname === 'localhost'
+      ? 'http://localhost:3002'
+      : '/admin';
+    
+    // Navigate to admin portal
+    function goToAdminPortal() {
+      window.location.href = ADMIN_PORTAL_URL;
+    }
+    
+    // Check access control
+    function checkAccess() {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if (currentUser.role !== 'admin') {
+        showToast('Access Denied: Only administrators can access this portal', 'error');
+        setTimeout(() => {
+          window.location.href = ADMIN_PORTAL_URL;
+        }, 2000);
+        return false;
+      }
+      return true;
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!checkAccess()) return;
+      
+      generateEmployeeId();
+      
+      // Auto-calculate probation date when hire date changes
+      document.getElementById('hireDate').addEventListener('change', calculateProbationDate);
+      
+      // Format phone inputs
+      ['phone', 'emergencyPhone'].forEach(id => {
+        document.getElementById(id).addEventListener('input', formatPhoneNumber);
+      });
+
+      // Set default hire date to today
+      document.getElementById('hireDate').value = new Date().toISOString().split('T')[0];
+      calculateProbationDate();
+    });
+
+    // Generate Employee ID
+    function generateEmployeeId() {
+      const year = new Date().getFullYear();
+      const random = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
+      document.getElementById('employeeId').value = `EMP-${year}-${random}`;
+    }
+
+    // Calculate probation end date (+3 months)
+    function calculateProbationDate() {
+      const hireDate = document.getElementById('hireDate').value;
+      if (hireDate) {
+        const date = new Date(hireDate);
+        date.setMonth(date.getMonth() + 3);
+        document.getElementById('probationEndDate').value = date.toISOString().split('T')[0];
+      }
+    }
+
+    // Generate random password
+    function generatePassword() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+      let password = '';
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('password').value = password;
+      showToast('Password generated successfully', 'success');
+    }
+
+    // Format phone number
+    function formatPhoneNumber(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 4) {
+        value = value.slice(0, 4) + '-' + value.slice(4);
+      }
+      if (value.length > 8) {
+        value = value.slice(0, 8) + '-' + value.slice(8, 12);
+      }
+      e.target.value = value;
+    }
+
+    // Validate email format
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    // Check for duplicate email
+    async function checkDuplicateEmail(email) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users`);
+        const users = await response.json();
+        return users.some(user => user.email.toLowerCase() === email.toLowerCase());
+      } catch (error) {
+        console.error('Error checking duplicate email:', error);
+        return false;
+      }
+    }
+
+    // Validate form
+    function validateForm() {
+      let isValid = true;
+      const errors = {};
+
+      // Clear previous errors
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+
+      // Required fields
+      const requiredFields = {
+        name: 'Full name is required',
+        email: 'Email is required',
+        phone: 'Phone number is required',
+        password: 'Password is required',
+        position: 'Position is required',
+        department: 'Department is required',
+        hireDate: 'Hire date is required',
+        employmentType: 'Employment type is required',
+        street: 'Street address is required',
+        barangay: 'Barangay is required',
+        city: 'City is required',
+        province: 'Province is required',
+        zipCode: 'ZIP code is required',
+        emergencyName: 'Emergency contact name is required',
+        emergencyRelationship: 'Relationship is required',
+        emergencyPhone: 'Emergency contact phone is required'
+      };
+
+      for (const [field, message] of Object.entries(requiredFields)) {
+        const element = document.getElementById(field);
+        if (!element.value.trim()) {
+          errors[field] = message;
+          isValid = false;
+        }
+      }
+
+      // Email validation
+      const email = document.getElementById('email').value;
+      if (email && !validateEmail(email)) {
+        errors.email = 'Invalid email format';
+        isValid = false;
+      }
+
+      // Phone validation
+      const phone = document.getElementById('phone').value;
+      if (phone && !/^[0-9]{4}-[0-9]{3}-[0-9]{4}$/.test(phone)) {
+        errors.phone = 'Invalid phone format (0917-123-4567)';
+        isValid = false;
+      }
+
+      // Emergency phone validation
+      const emergencyPhone = document.getElementById('emergencyPhone').value;
+      if (emergencyPhone && !/^[0-9]{4}-[0-9]{3}-[0-9]{4}$/.test(emergencyPhone)) {
+        errors.emergencyPhone = 'Invalid phone format (0917-123-4567)';
+        isValid = false;
+      }
+
+      // ZIP code validation
+      const zipCode = document.getElementById('zipCode').value;
+      if (zipCode && !/^[0-9]{4}$/.test(zipCode)) {
+        errors.zipCode = 'ZIP code must be 4 digits';
+        isValid = false;
+      }
+
+      // Display errors
+      for (const [field, message] of Object.entries(errors)) {
+        const errorEl = document.getElementById(field + 'Error');
+        const inputEl = document.getElementById(field);
+        if (errorEl) errorEl.textContent = message;
+        if (inputEl) inputEl.classList.add('error');
+      }
+
+      return isValid;
+    }
+
+    // Submit form
+    document.getElementById('employmentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!validateForm()) {
+        showToast('Please fix the errors in the form', 'error');
+        return;
+      }
+
+      const email = document.getElementById('email').value;
+      
+      // Check for duplicate email
+      document.getElementById('loadingOverlay').classList.add('active');
+      const isDuplicate = await checkDuplicateEmail(email);
+      
+      if (isDuplicate) {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        document.getElementById('emailError').textContent = 'This email is already registered';
+        document.getElementById('email').classList.add('error');
+        showToast('Email already exists in the system', 'error');
+        return;
+      }
+
+      // Prepare data
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const agentData = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        role: 'agent',
+        phone: document.getElementById('phone').value,
+        active: true,
+        employmentInfo: {
+          employeeId: document.getElementById('employeeId').value,
+          dateHired: new Date(document.getElementById('hireDate').value).toISOString(),
+          position: document.getElementById('position').value.trim(),
+          department: document.getElementById('department').value,
+          reportingTo: document.getElementById('reportingTo').value.trim() || null,
+          employmentType: document.getElementById('employmentType').value,
+          probationEndDate: document.getElementById('probationEndDate').value ? 
+            new Date(document.getElementById('probationEndDate').value).toISOString() : null,
+          emergencyContact: {
+            name: document.getElementById('emergencyName').value.trim(),
+            relationship: document.getElementById('emergencyRelationship').value.trim(),
+            phone: document.getElementById('emergencyPhone').value
+          },
+          address: {
+            street: document.getElementById('street').value.trim(),
+            barangay: document.getElementById('barangay').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            province: document.getElementById('province').value.trim(),
+            zipCode: document.getElementById('zipCode').value
+          },
+          governmentIds: {
+            sss: document.getElementById('sss').value || null,
+            tin: document.getElementById('tin').value || null,
+            philhealth: document.getElementById('philhealth').value || null,
+            pagibig: document.getElementById('pagibig').value || null
+          },
+          licenseNumber: document.getElementById('licenseNumber').value || null,
+          licenseExpiry: document.getElementById('licenseExpiry').value || null,
+          specialization: document.getElementById('specialization').value || null,
+          addedBy: currentUser.name || 'Admin User',
+          addedByEmail: currentUser.email || 'admin@tesproperty.com',
+          notes: document.getElementById('notes').value.trim() || null
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(agentData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Show success modal
+          document.getElementById('modalEmployeeId').textContent = agentData.employmentInfo.employeeId;
+          document.getElementById('modalName').textContent = agentData.name;
+          document.getElementById('modalEmail').textContent = agentData.email;
+          document.getElementById('modalPassword').textContent = agentData.password;
+          document.getElementById('modalPosition').textContent = agentData.employmentInfo.position;
+          
+          document.getElementById('successModal').classList.add('active');
+          showToast('Agent created successfully!', 'success');
+        } else {
+          showToast(result.error || 'Failed to create agent', 'error');
+        }
+      } catch (error) {
+        console.error('Error creating agent:', error);
+        showToast('Network error. Please try again.', 'error');
+      } finally {
+        document.getElementById('loadingOverlay').classList.remove('active');
+      }
+    });
+
+    // Copy credentials
+    function copyCredentials() {
+      const credentials = `
+Employee ID: ${document.getElementById('modalEmployeeId').textContent}
+Name: ${document.getElementById('modalName').textContent}
+Email: ${document.getElementById('modalEmail').textContent}
+Password: ${document.getElementById('modalPassword').textContent}
+Position: ${document.getElementById('modalPosition').textContent}
+      `.trim();
+
+      navigator.clipboard.writeText(credentials).then(() => {
+        showToast('Credentials copied to clipboard!', 'success');
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy credentials', 'error');
+      });
+    }
+
+    // Add another agent
+    function addAnother() {
+      document.getElementById('successModal').classList.remove('active');
+      resetForm();
+    }
+
+    // View all agents
+    function viewAllAgents() {
+      window.location.href = `${ADMIN_PORTAL_URL}#agents`;
+    }
+
+    // Reset form
+    function resetForm() {
+      document.getElementById('employmentForm').reset();
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+      generateEmployeeId();
+      document.getElementById('hireDate').value = new Date().toISOString().split('T')[0];
+      calculateProbationDate();
+      showToast('Form reset', 'success');
+    }
+
+    // Show toast
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      
+      toastMessage.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('active');
+
+      setTimeout(() => {
+        toast.classList.remove('active');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
