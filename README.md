@@ -157,9 +157,9 @@ npm run build:superadmin
 
 ## 📝 How to Add New Agent
 
-### Using Super Admin Portal (HR Management)
+The **Super Admin Portal** at http://localhost:3004 is the **ONLY** supported method for creating new agent accounts in production environments.
 
-The **Super Admin Portal** at http://localhost:3004 is the **ONLY** supported method for creating new agent accounts and managing HR operations.
+### Using Super Admin Portal (Official Method)
 
 **Steps:**
 
@@ -186,9 +186,10 @@ The **Super Admin Portal** at http://localhost:3004 is the **ONLY** supported me
 - ✅ Complete validation with inline error messages
 - ✅ Credential copy-to-clipboard functionality
 
-**Important Notes:**
-- This is the **ONLY** supported method for creating agent accounts
-- Direct database editing is **deprecated** and may cause data inconsistencies
+**Important:**
+- This is the **ONLY** supported production method
+- All agent accounts must be created through this portal
+- Direct database editing is **NOT** supported for normal operations
 - Single admin deployment (company standard) - race conditions not applicable
 
 ## 🏘️ Enhanced Property Creation
@@ -1050,6 +1051,104 @@ This is a frontend-only MVP with intentional limitations:
 ### Reporting
 - **jsPDF** - PDF generation
 - **PapaParse** - CSV parsing
+
+---
+
+## 🚨 Appendix: Emergency/Developer Procedures
+
+> **⚠️ WARNING:** The procedures in this section are for **EMERGENCY USE** or **LOCAL DEVELOPMENT ONLY**.  
+> **DO NOT** use these methods in production environments.  
+> **ALWAYS** use the Super Admin Portal for normal agent creation.
+
+### Emergency Manual Agent Creation
+
+**When to use:** 
+- Server/portal is down and you need immediate agent access
+- Local development/testing without starting the web portals
+- Database recovery scenarios
+
+**⚠️ Risks:**
+- No validation checks (duplicate email, phone format, etc.)
+- No auto-generation of Employee IDs or probation dates
+- No activity log entries created
+- Data consistency issues if done incorrectly
+- May break referential integrity
+
+**Procedure:**
+
+1. **Stop the backend server** if running (to avoid file conflicts)
+
+2. **Open `data/users.json`** in a text editor
+
+3. **Add new entry to the `data` array:**
+
+```json
+{
+  "id": 8,
+  "name": "Emergency Agent Name",
+  "email": "emergency@tesproperty.com",
+  "password": "tempPassword123",
+  "role": "agent",
+  "phone": "0917-999-8888",
+  "active": true,
+  "employmentInfo": {
+    "employeeId": "EMP-2025-XXX",
+    "dateHired": "2025-12-10T00:00:00Z",
+    "position": "Real Estate Agent",
+    "department": "Sales",
+    "employmentType": "Probationary",
+    "probationEndDate": "2026-03-10T00:00:00Z"
+  },
+  "createdAt": "2025-12-10T00:00:00Z",
+  "updatedAt": "2025-12-10T00:00:00Z"
+}
+```
+
+4. **Update `_metadata.recordCount`** in both `users.json` and `new-agents.json`
+
+5. **Also add to `data/new-agents.json`** (same structure)
+
+6. **Manual Activity Log Entry** (optional): Add to `data/activity-log.json`:
+```json
+{
+  "timestamp": "2025-12-10T10:00:00Z",
+  "action": "ADD_AGENT_MANUAL",
+  "section": "Users",
+  "note": "Emergency manual agent creation - bypassed Super Admin Portal",
+  "details": {
+    "agentName": "Emergency Agent Name",
+    "email": "emergency@tesproperty.com",
+    "reason": "Server downtime / Testing",
+    "addedBy": "System Administrator"
+  }
+}
+```
+
+7. **Restart the backend server:** `npm run backend`
+
+8. **Verify in Super Admin Portal** that the agent appears correctly
+
+9. **⚠️ IMPORTANT:** After emergency is resolved, **deactivate** this account and recreate properly through the Super Admin Portal
+
+**Field Requirements:**
+- `id` - Must be unique, use next sequential number
+- `email` - Must be unique, valid email format
+- `phone` - Format: `0917-XXX-XXXX`
+- `password` - Plaintext (will be hashed in future versions)
+- `employeeId` - Format: `EMP-YYYY-XXX`
+- `dateHired` - ISO 8601 format
+- `probationEndDate` - Exactly 3 months after `dateHired`
+
+**Post-Emergency Checklist:**
+- [ ] Document why manual creation was necessary
+- [ ] Verify agent can log in successfully
+- [ ] Check for duplicate emails/IDs in database
+- [ ] Plan to migrate to proper Super Admin creation when possible
+- [ ] Update team about the emergency procedure used
+
+---
+
+**For all normal operations, use the Super Admin Portal at http://localhost:3004**
 
 ---
 
