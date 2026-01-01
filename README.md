@@ -1092,15 +1092,15 @@ This is a frontend-only MVP with intentional limitations:
   "phone": "0917-999-8888",
   "active": true,
   "employmentInfo": {
-    "employeeId": "EMP-2025-008",
-    "dateHired": "2025-12-10T00:00:00Z",
+    "employeeId": "EMP-2026-008",
+    "dateHired": "2026-01-10T00:00:00Z",
     "position": "Real Estate Agent",
     "department": "Sales",
     "employmentType": "Probationary",
-    "probationEndDate": "2026-03-10T00:00:00Z"
+    "probationEndDate": "2026-04-10T00:00:00Z"
   },
-  "createdAt": "2025-12-10T00:00:00Z",
-  "updatedAt": "2025-12-10T00:00:00Z"
+  "createdAt": "2026-01-10T00:00:00Z",
+  "updatedAt": "2026-01-10T00:00:00Z"
 }
 ```
 
@@ -1111,7 +1111,7 @@ This is a frontend-only MVP with intentional limitations:
 6. **Manual Activity Log Entry** (optional): Add to `data/activity-log.json`:
 ```json
 {
-  "timestamp": "2025-12-10T10:00:00Z",
+  "timestamp": "2026-01-10T10:00:00Z",
   "action": "ADD_AGENT_MANUAL",
   "section": "Users",
   "note": "Emergency manual agent creation - bypassed Super Admin Portal",
@@ -1134,9 +1134,9 @@ This is a frontend-only MVP with intentional limitations:
 - `id` - Must be unique, use next sequential number
 - `email` - Must be unique, valid email format
 - `phone` - Format: `0917-XXX-XXXX` (e.g., `0917-999-8888`)
-- `password` - **⚠️ SECURITY WARNING:** Currently stored as plaintext. Use a strong temporary password and require immediate change upon first login
-- `employeeId` - Format: `EMP-YYYY-###` (e.g., `EMP-2025-008` where ### is a 3-digit sequential number)
-- `dateHired` - ISO 8601 format (e.g., `2025-12-10T00:00:00Z`)
+- `password` - **⚠️ CRITICAL SECURITY RISK:** Stored as plaintext without hashing. This is a significant vulnerability. Use a strong temporary password and **require immediate change upon first login**. Production systems must implement proper password hashing.
+- `employeeId` - Format: `EMP-YYYY-###` (e.g., `EMP-2026-008` where ### is a 3-digit sequential number)
+- `dateHired` - ISO 8601 format (e.g., `2026-01-10T00:00:00Z`)
 - `probationEndDate` - Exactly 3 months after `dateHired` in ISO 8601 format
 
 **Post-Emergency Checklist:**
