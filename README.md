@@ -81,6 +81,25 @@ This will start:
 - Agent Portal on http://localhost:3003
 - Super Admin Portal on http://localhost:3004
 
+### Environment Configuration
+
+The application supports environment variables for configuration. Create a `.env` file in the root directory (use `.env.example` as a template):
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env with your configuration
+```
+
+**Available Environment Variables:**
+- `PORT` - Backend API port (default: 3000)
+- `ALLOWED_ORIGINS` - Comma-separated CORS origins (default: localhost:3001-3004)
+- `NODE_ENV` - Environment mode (development/production)
+- `VITE_API_URL` - API base URL for frontend
+
+For development, the default values work out of the box. For production deployment, see [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md).
+
 ### Individual Portal Start
 
 ```bash
@@ -108,6 +127,8 @@ npm run build:superadmin
 ```
 
 ## 👥 User Roles & Access
+
+> **⚠️ SECURITY NOTICE:** The hardcoded credentials below are for **development/demo purposes ONLY**. In production, these must be changed and stored securely using environment variables or a secrets management system.
 
 ### Admin User
 - **Default Credentials**: admin@tesproperty.com / admin123
@@ -138,7 +159,7 @@ npm run build:superadmin
 
 ### Using Super Admin Portal (HR Management)
 
-The **Super Admin Portal** at http://localhost:3004 is the authoritative solution for creating new agent accounts and managing HR operations.
+The **Super Admin Portal** at http://localhost:3004 is the **ONLY** supported method for creating new agent accounts and managing HR operations.
 
 **Steps:**
 
@@ -165,7 +186,10 @@ The **Super Admin Portal** at http://localhost:3004 is the authoritative solutio
 - ✅ Complete validation with inline error messages
 - ✅ Credential copy-to-clipboard functionality
 
-**Note:** This is the ONLY supported method for creating agent accounts. Direct database editing is not recommended and may cause data inconsistencies.
+**Important Notes:**
+- This is the **ONLY** supported method for creating agent accounts
+- Direct database editing is **deprecated** and may cause data inconsistencies
+- Single admin deployment (company standard) - race conditions not applicable
 
 ## 🏘️ Enhanced Property Creation
 
@@ -860,11 +884,17 @@ npm run preview
 
 ## 📸 Application Screenshots
 
+> **Note:** Screenshots below are placeholder references. To add actual screenshots, capture images from the running application and save them in the `screenshots/` directory with the filenames specified below.
+
 ### 🛍️ Customer Portal (Port 3001)
 
-#### Property Listing
-![Customer Portal - Property Listing](./screenshots/customer-portal-listing.png)
-*Browse and filter available properties*
+#### Property Listing (Main Screen)
+![Customer Portal - Main Screen](./screenshots/customer-portal-main.png)
+*Browse and filter available properties with search and category filters*
+
+#### Property Details Modal
+![Customer Portal - Property Details](./screenshots/customer-portal-details.png)
+*Detailed property view with photo gallery and inquiry form*
 
 ---
 
@@ -872,19 +902,11 @@ npm run preview
 
 #### Dashboard
 ![Admin Portal - Dashboard](./screenshots/admin-portal-dashboard.png)
-*Real-time statistics and activity monitoring*
+*Real-time statistics and activity monitoring with analytics*
 
 #### Properties Management
 ![Admin Portal - Properties](./screenshots/admin-portal-properties.png)
-*Manage all properties with comprehensive controls*
-
-#### Inquiries Management
-![Admin Portal - Inquiries](./screenshots/admin-portal-inquiries.png)
-*Track and assign customer inquiries to agents*
-
-#### Agent Management
-![Admin Portal - Agents](./screenshots/admin-portal-agents.png)
-*View agent performance and statistics*
+*Comprehensive 40+ field property creation form with accordion sections*
 
 ---
 
@@ -892,27 +914,19 @@ npm run preview
 
 #### Agent Dashboard
 ![Agent Portal - Dashboard](./screenshots/agent-portal-dashboard.png)
-*Agent-specific dashboard with assigned inquiries*
-
-#### Assigned Inquiries
-![Agent Portal - Inquiries](./screenshots/agent-portal-inquiries.png)
-*Manage customer inquiries and update status*
-
-#### Calendar & Scheduling
-![Agent Portal - Calendar](./screenshots/agent-portal-calendar.png)
-*Schedule property viewings with conflict detection*
+*Agent-specific dashboard with assigned inquiries and performance metrics*
 
 ---
 
 ### 🏢 Super Admin Portal (Port 3004)
 
 #### Employment Registration Form
-![Super Admin Portal - Registration Form](./screenshots/superadmin-portal-form.png)
+![Super Admin Portal - Registration Form](./screenshots/superadmin-registration-form.png)
 *Comprehensive HR management with 7 form sections: Basic Info, Employment Details, License Information, Address, Emergency Contact, Government IDs, and Internal Notes*
 
-#### Form Sections View
-![Super Admin Portal - Form Sections](./screenshots/superadmin-portal-sections.png)
-*Detailed view of employment registration sections with auto-generated Employee ID and validation*
+#### Success Modal with Credentials
+![Super Admin Portal - Success Modal](./screenshots/superadmin-success-modal.png)
+*Success confirmation with copyable credentials for newly created agent account*
 
 ---
 
