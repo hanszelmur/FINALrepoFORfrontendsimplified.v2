@@ -531,7 +531,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('${API_BASE_URL}/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
         myInquiries = inquiries.filter(inquiry => inquiry.assignedAgentId === currentUser.id);
@@ -652,7 +652,7 @@
     
     async function loadCalendarEvents() {
       try {
-        const calendarRes = await fetch('${API_BASE_URL}/api/calendar');
+        const calendarRes = await fetch(`${API_BASE_URL}/api/calendar`);
         const events = await calendarRes.json();
         
         const now = new Date();
@@ -675,7 +675,7 @@
     
     async function loadUserStats() {
       try {
-        const usersRes = await fetch('${API_BASE_URL}/api/users');
+        const usersRes = await fetch(`${API_BASE_URL}/api/users`);
         const users = await usersRes.json();
         
         const currentUserData = users.find(u => u.id === currentUser.id);
@@ -734,7 +734,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('${API_BASE_URL}/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
         myInquiries = inquiries.filter(inquiry => inquiry.assignedAgentId === currentUser.id);
@@ -977,7 +977,7 @@
     
     async function loadEvents() {
       try {
-        const calendarRes = await fetch('${API_BASE_URL}/api/calendar');
+        const calendarRes = await fetch(`${API_BASE_URL}/api/calendar`);
         const allEvents = await calendarRes.json();
         
         const events = allEvents.filter(event => event.agentId === currentUser.id);
@@ -1025,7 +1025,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('${API_BASE_URL}/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
         myInquiries = inquiries.filter(inquiry => 
@@ -1109,7 +1109,7 @@
         }
         
         try {
-          await fetch('${API_BASE_URL}/api/calendar', {
+          await fetch(`${API_BASE_URL}/api/calendar`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(event)
@@ -1144,10 +1144,10 @@
     
     async function loadMyProperties() {
       try {
-        const inquiriesRes = await fetch('${API_BASE_URL}/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
-        const propertiesRes = await fetch('${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const allProperties = await propertiesRes.json();
         
         // Get my active inquiries
