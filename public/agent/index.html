@@ -451,7 +451,6 @@
     }
     
     function loadSectionData(sectionId) {
-      console.log('Loading agent section:', sectionId);
       switch(sectionId) {
         case 'dashboard':
           if (typeof loadDashboardData === 'function') loadDashboardData();
@@ -470,17 +469,14 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Agent SPA initializing...');
       
       // Check authentication
       if (!checkAuth || !checkAuth('agent')) {
-        console.log('Auth failed, redirecting to login');
         window.location.href = '../shared/login.html';
         return;
       }
       
       currentUser = getCurrentUser();
-      console.log('Current user:', currentUser);
       
       // Update user name if element exists
       const userNameEl = document.getElementById('agentName');
@@ -497,14 +493,12 @@
       
       // Load initial section based on hash or default to dashboard
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Initial section:', hash);
       showSection(hash);
     });
     
     // Handle browser back/forward buttons
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Hash changed to:', hash);
       showSection(hash);
     });
     

@@ -900,7 +900,6 @@
     }
     
     function loadSectionData(sectionId) {
-      console.log('Loading section:', sectionId);
       switch(sectionId) {
         case 'dashboard':
           if (typeof loadDashboardData === 'function') loadDashboardData();
@@ -924,17 +923,14 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Admin SPA initializing...');
       
       // Check authentication
       if (!checkAuth || !checkAuth('admin')) {
-        console.log('Auth failed, redirecting to login');
         window.location.href = '../shared/login.html';
         return;
       }
       
       currentUser = getCurrentUser();
-      console.log('Current user:', currentUser);
       
       // Update user name if element exists
       const userNameEl = document.getElementById('userName');
@@ -951,14 +947,12 @@
       
       // Load initial section based on hash or default to dashboard
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Initial section:', hash);
       showSection(hash);
     });
     
     // Handle browser back/forward buttons
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Hash changed to:', hash);
       showSection(hash);
     });
     
@@ -1028,7 +1022,7 @@
         }
         
         // Load properties
-        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         
         const activeProps = properties.filter(p => 
@@ -1105,7 +1099,7 @@
     
     async function loadExpiringReservations() {
       try {
-        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         const container = document.getElementById('expiringReservations');
         
@@ -1292,7 +1286,7 @@
     
     async function loadProperties() {
       try {
-        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         allProperties = await propertiesRes.json();
         
         const filterProperty = document.getElementById('filterProperty');
@@ -1666,7 +1660,7 @@
     
     async function loadProperties() {
       try {
-        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         allProperties = await propertiesRes.json();
         
         allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1823,9 +1817,8 @@
     
     // Simple alert function (can be replaced with toast system)
     function showAlert(message, type = 'info') {
-      // For now, using console and browser alert
+      // For now, using browser alert
       // TODO: Replace with toast notification system from common.css
-      console.log(`[${type.toUpperCase()}]`, message);
       alert(message);
     }
     
@@ -2074,7 +2067,7 @@
               createdAt: now
             };
             
-            await fetch(`${API_BASE_URL}/api/properties', {
+            await fetch(`${API_BASE_URL}/api/properties`, {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
               body: JSON.stringify(property)
@@ -2317,7 +2310,7 @@
         const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         
-        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         
         const filtered = inquiries.filter(i => {
@@ -2396,7 +2389,7 @@
         const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         
-        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         
         const usersRes = await fetch(`${API_BASE_URL}/api/users');
