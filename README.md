@@ -1092,7 +1092,7 @@ This is a frontend-only MVP with intentional limitations:
   "phone": "0917-999-8888",
   "active": true,
   "employmentInfo": {
-    "employeeId": "EMP-2025-XXX",
+    "employeeId": "EMP-2025-008",
     "dateHired": "2025-12-10T00:00:00Z",
     "position": "Real Estate Agent",
     "department": "Sales",
@@ -1133,11 +1133,11 @@ This is a frontend-only MVP with intentional limitations:
 **Field Requirements:**
 - `id` - Must be unique, use next sequential number
 - `email` - Must be unique, valid email format
-- `phone` - Format: `0917-XXX-XXXX`
-- `password` - Plaintext (will be hashed in future versions)
-- `employeeId` - Format: `EMP-YYYY-XXX`
-- `dateHired` - ISO 8601 format
-- `probationEndDate` - Exactly 3 months after `dateHired`
+- `phone` - Format: `0917-XXX-XXXX` (e.g., `0917-999-8888`)
+- `password` - **⚠️ SECURITY WARNING:** Currently stored as plaintext. Use a strong temporary password and require immediate change upon first login
+- `employeeId` - Format: `EMP-YYYY-###` (e.g., `EMP-2025-008` where ### is a 3-digit sequential number)
+- `dateHired` - ISO 8601 format (e.g., `2025-12-10T00:00:00Z`)
+- `probationEndDate` - Exactly 3 months after `dateHired` in ISO 8601 format
 
 **Post-Emergency Checklist:**
 - [ ] Document why manual creation was necessary
