@@ -8,8 +8,6 @@
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
-    // eslint-disable-next-line no-console
-    console.log('[SW] Service workers are not supported');
     return null;
   }
 
@@ -18,20 +16,13 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
       scope: '/',
     });
 
-    // eslint-disable-next-line no-console
-    console.log('[SW] Service worker registered successfully:', registration.scope);
-
     // Check for updates periodically
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
-      // eslint-disable-next-line no-console
-      console.log('[SW] New service worker found, installing...');
 
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // eslint-disable-next-line no-console
-            console.log('[SW] New service worker installed, update available');
             showUpdateNotification(registration);
           }
         });
@@ -90,8 +81,6 @@ export async function unregisterServiceWorker(): Promise<boolean> {
     for (const registration of registrations) {
       await registration.unregister();
     }
-    // eslint-disable-next-line no-console
-    console.log('[SW] Service worker unregistered');
     return true;
   } catch (error) {
     console.error('[SW] Failed to unregister service worker:', error);

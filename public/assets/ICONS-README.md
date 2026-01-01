@@ -1,5 +1,17 @@
 # PWA Icons Generation
 
+## ⚠️ REQUIRED BEFORE DEPLOYMENT
+
+**PWA icons are MISSING.** Generate them before deploying to production.
+
+```bash
+npx @vite-pwa/assets-generator --preset minimal public/logo.png
+```
+
+**Without these icons, the PWA will NOT install properly on mobile devices.**
+
+---
+
 This directory should contain the following icon files for the Progressive Web App (PWA):
 
 ## Required Icons
