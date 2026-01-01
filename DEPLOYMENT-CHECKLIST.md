@@ -49,13 +49,40 @@ Vendor Joi:     171.00 KB (gzipped: 54.32 KB)
 
 ## Deployment Steps
 
-### 1. Build for Production
+### 1. Remove Production Console.log Statements
+Ensure all informational `console.log` statements have been removed:
 ```bash
-npm run build
+# Check for remaining console.log statements
+grep -r "console.log" src/ --exclude-dir=node_modules
+
+# Only console.error for critical errors should remain
 ```
 
-### 2. Generate PWA Icons
-Before deploying, generate actual PWA icons:
+### 2. Configure Environment Variables
+Set up production environment variables:
+```bash
+# Copy and edit .env file
+cp .env.example .env
+
+# Required variables:
+# - ALLOWED_ORIGINS: Comma-separated list of allowed frontend origins
+# - PORT: Backend API port (default: 3000)
+# - NODE_ENV: production
+```
+
+### 3. Configure CORS Origins
+Update `ALLOWED_ORIGINS` in `.env` with your production frontend URLs:
+```bash
+ALLOWED_ORIGINS=https://customer.yourdomain.com,https://admin.yourdomain.com,https://agent.yourdomain.com,https://superadmin.yourdomain.com
+```
+
+### 4. Build for Production
+```bash
+npm run build:all
+```
+
+### 5. Generate PWA Icons
+**⚠️ REQUIRED** - Generate actual PWA icons before deployment:
 ```bash
 # Option 1: Using PWA Asset Generator
 npx @vite-pwa/assets-generator --preset minimal public/logo.png
@@ -74,7 +101,7 @@ Place generated icons in `public/assets/`:
 - icon-384x384.png
 - icon-512x512.png
 
-### 3. Deploy Static Files
+### 6. Deploy Static Files
 Deploy the contents of the `dist/` folder to your hosting provider.
 
 **Recommended Providers:**
@@ -84,10 +111,10 @@ Deploy the contents of the `dist/` folder to your hosting provider.
 - Cloudflare Pages
 - Firebase Hosting
 
-### 4. Configure HTTPS
+### 7. Configure HTTPS
 PWA and Service Workers require HTTPS. Most providers offer free SSL certificates.
 
-### 5. Set Cache Headers
+### 8. Set Cache Headers
 Configure your hosting provider to set appropriate cache headers:
 
 ```
@@ -101,14 +128,14 @@ Cache-Control: no-cache, must-revalidate
 Cache-Control: no-cache
 ```
 
-### 6. Verify Service Worker
+### 9. Verify Service Worker
 After deployment:
 1. Visit your site in Chrome
 2. Open DevTools > Application
 3. Check "Service Workers" section
 4. Verify registration and status
 
-### 7. Test PWA Installation
+### 10. Test PWA Installation
 1. Visit site on mobile device
 2. Look for "Add to Home Screen" prompt
 3. Install and test offline functionality

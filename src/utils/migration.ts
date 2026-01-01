@@ -60,12 +60,8 @@ export function runMigrations(): void {
     }
     
     if (needsMigration) {
-      // eslint-disable-next-line no-console
-      console.log('[Migration] Converting photos to new format...');
       const migratedProperties = migratePropertiesPhotos(properties);
       localStorage.setItem('tes_properties', JSON.stringify(migratedProperties));
-      // eslint-disable-next-line no-console
-      console.log('[Migration] Photo format migration complete');
     }
   } catch (error) {
     console.error('[Migration] Error during migration:', error);

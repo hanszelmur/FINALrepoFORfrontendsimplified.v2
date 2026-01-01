@@ -859,6 +859,11 @@
   <script src="../js/utils.js"></script>
   
   <script>
+    // API Configuration
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000'
+      : '/api';
+    
     // ===== GLOBAL STATE AND SPA LOGIC =====
     let currentUser = null;
     let currentSection = 'dashboard';
@@ -895,7 +900,6 @@
     }
     
     function loadSectionData(sectionId) {
-      console.log('Loading section:', sectionId);
       switch(sectionId) {
         case 'dashboard':
           if (typeof loadDashboardData === 'function') loadDashboardData();
@@ -919,17 +923,14 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Admin SPA initializing...');
       
       // Check authentication
       if (!checkAuth || !checkAuth('admin')) {
-        console.log('Auth failed, redirecting to login');
         window.location.href = '../shared/login.html';
         return;
       }
       
       currentUser = getCurrentUser();
-      console.log('Current user:', currentUser);
       
       // Update user name if element exists
       const userNameEl = document.getElementById('userName');
@@ -946,14 +947,12 @@
       
       // Load initial section based on hash or default to dashboard
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Initial section:', hash);
       showSection(hash);
     });
     
     // Handle browser back/forward buttons
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Hash changed to:', hash);
       showSection(hash);
     });
     
@@ -987,7 +986,7 @@
     async function loadStatistics() {
       try {
         // Load inquiries
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         
         const today = new Date();
@@ -1023,7 +1022,7 @@
         }
         
         // Load properties
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         
         const activeProps = properties.filter(p => 
@@ -1048,7 +1047,7 @@
     
     async function loadActionItems() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         const container = document.getElementById('actionItems');
         
@@ -1100,7 +1099,7 @@
     
     async function loadExpiringReservations() {
       try {
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         const container = document.getElementById('expiringReservations');
         
@@ -1139,7 +1138,7 @@
     
     async function loadRecentActivity() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         const container = document.getElementById('recentActivity');
         
@@ -1250,7 +1249,7 @@
     
     async function loadAgents() {
       try {
-        const usersRes = await fetch('http://localhost:3000/api/users');
+        const usersRes = await fetch(`${API_BASE_URL}/api/users');
         const users = await usersRes.json();
         
         allAgents = users.filter(u => u.role === 'agent');
@@ -1287,7 +1286,7 @@
     
     async function loadProperties() {
       try {
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         allProperties = await propertiesRes.json();
         
         const filterProperty = document.getElementById('filterProperty');
@@ -1305,7 +1304,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         allInquiries = await inquiriesRes.json();
         
         // Sort by date (newest first)
@@ -1483,7 +1482,7 @@
           ]
         };
         
-        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+        await fetch(`${API_BASE_URL}/api/inquiries/${currentInquiry.id}`, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updatedInquiry)
@@ -1563,7 +1562,7 @@
           ]
         };
         
-        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+        await fetch(`${API_BASE_URL}/api/inquiries/${currentInquiry.id}`, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updatedInquiry)
@@ -1661,7 +1660,7 @@
     
     async function loadProperties() {
       try {
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         allProperties = await propertiesRes.json();
         
         allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1818,9 +1817,8 @@
     
     // Simple alert function (can be replaced with toast system)
     function showAlert(message, type = 'info') {
-      // For now, using console and browser alert
+      // For now, using browser alert
       // TODO: Replace with toast notification system from common.css
-      console.log(`[${type.toUpperCase()}]`, message);
       alert(message);
     }
     
@@ -2052,7 +2050,7 @@
               }
             };
             
-            await fetch(`http://localhost:3000/api/properties/${currentProperty.id}`, {
+            await fetch(`${API_BASE_URL}/api/properties/${currentProperty.id}`, {
               method: 'PUT',
               headers: {'Content-Type': 'application/json'},
               body: JSON.stringify(updatedProperty)
@@ -2069,7 +2067,7 @@
               createdAt: now
             };
             
-            await fetch('http://localhost:3000/api/properties', {
+            await fetch(`${API_BASE_URL}/api/properties`, {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
               body: JSON.stringify(property)
@@ -2113,7 +2111,7 @@
           }
         }
         
-        await fetch(`http://localhost:3000/api/properties/${property.id}`, {
+        await fetch(`${API_BASE_URL}/api/properties/${property.id}`, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updates)
@@ -2146,7 +2144,7 @@
     
     async function loadAgents() {
       try {
-        const usersRes = await fetch('http://localhost:3000/api/users');
+        const usersRes = await fetch(`${API_BASE_URL}/api/users');
         const users = await usersRes.json();
         
         allAgents = users.filter(u => u.role === 'agent');
@@ -2309,10 +2307,10 @@
       }
       
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         
         const filtered = inquiries.filter(i => {
@@ -2388,13 +2386,13 @@
       updateDateRange();
       
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries');
         const inquiries = await inquiriesRes.json();
         
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const properties = await propertiesRes.json();
         
-        const usersRes = await fetch('http://localhost:3000/api/users');
+        const usersRes = await fetch(`${API_BASE_URL}/api/users');
         const users = await usersRes.json();
         
         let data = [];

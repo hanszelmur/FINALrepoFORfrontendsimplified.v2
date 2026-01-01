@@ -410,6 +410,11 @@
   <script src="../js/utils.js"></script>
   
   <script>
+    // API Configuration
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000'
+      : '/api';
+    
     // ===== GLOBAL STATE AND SPA LOGIC =====
     let currentUser = null;
     let currentSection = 'dashboard';
@@ -446,7 +451,6 @@
     }
     
     function loadSectionData(sectionId) {
-      console.log('Loading agent section:', sectionId);
       switch(sectionId) {
         case 'dashboard':
           if (typeof loadDashboardData === 'function') loadDashboardData();
@@ -465,17 +469,14 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Agent SPA initializing...');
       
       // Check authentication
       if (!checkAuth || !checkAuth('agent')) {
-        console.log('Auth failed, redirecting to login');
         window.location.href = '../shared/login.html';
         return;
       }
       
       currentUser = getCurrentUser();
-      console.log('Current user:', currentUser);
       
       // Update user name if element exists
       const userNameEl = document.getElementById('agentName');
@@ -492,14 +493,12 @@
       
       // Load initial section based on hash or default to dashboard
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Initial section:', hash);
       showSection(hash);
     });
     
     // Handle browser back/forward buttons
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.substring(1) || 'dashboard';
-      console.log('Hash changed to:', hash);
       showSection(hash);
     });
     
@@ -532,7 +531,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
         myInquiries = inquiries.filter(inquiry => inquiry.assignedAgentId === currentUser.id);
@@ -653,7 +652,7 @@
     
     async function loadCalendarEvents() {
       try {
-        const calendarRes = await fetch('http://localhost:3000/api/calendar');
+        const calendarRes = await fetch(`${API_BASE_URL}/api/calendar`);
         const events = await calendarRes.json();
         
         const now = new Date();
@@ -676,7 +675,7 @@
     
     async function loadUserStats() {
       try {
-        const usersRes = await fetch('http://localhost:3000/api/users');
+        const usersRes = await fetch(`${API_BASE_URL}/api/users`);
         const users = await usersRes.json();
         
         const currentUserData = users.find(u => u.id === currentUser.id);
@@ -735,7 +734,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
         myInquiries = inquiries.filter(inquiry => inquiry.assignedAgentId === currentUser.id);
@@ -846,7 +845,7 @@
           ]
         };
         
-        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+        await fetch(`${API_BASE_URL}/api/inquiries/${currentInquiry.id}`, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updatedInquiry)
@@ -890,7 +889,7 @@
           notes: newNotes.trim()
         };
         
-        await fetch(`http://localhost:3000/api/inquiries/${currentInquiry.id}`, {
+        await fetch(`${API_BASE_URL}/api/inquiries/${currentInquiry.id}`, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updatedInquiry)
@@ -978,7 +977,7 @@
     
     async function loadEvents() {
       try {
-        const calendarRes = await fetch('http://localhost:3000/api/calendar');
+        const calendarRes = await fetch(`${API_BASE_URL}/api/calendar`);
         const allEvents = await calendarRes.json();
         
         const events = allEvents.filter(event => event.agentId === currentUser.id);
@@ -1026,7 +1025,7 @@
     
     async function loadInquiries() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
         myInquiries = inquiries.filter(inquiry => 
@@ -1110,7 +1109,7 @@
         }
         
         try {
-          await fetch('http://localhost:3000/api/calendar', {
+          await fetch(`${API_BASE_URL}/api/calendar`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(event)
@@ -1145,10 +1144,10 @@
     
     async function loadMyProperties() {
       try {
-        const inquiriesRes = await fetch('http://localhost:3000/api/inquiries');
+        const inquiriesRes = await fetch(`${API_BASE_URL}/api/inquiries`);
         const inquiries = await inquiriesRes.json();
         
-        const propertiesRes = await fetch('http://localhost:3000/api/properties');
+        const propertiesRes = await fetch(`${API_BASE_URL}/api/properties`);
         const allProperties = await propertiesRes.json();
         
         // Get my active inquiries

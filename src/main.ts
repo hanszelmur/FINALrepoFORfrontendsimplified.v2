@@ -21,8 +21,6 @@ runMigrations();
 // Auto-load sample data on first visit
 if (!isInitialized()) {
   loadSampleData();
-  // eslint-disable-next-line no-console
-  console.log('Sample data loaded successfully!');
 }
 
 // Issue 25: Register service worker
